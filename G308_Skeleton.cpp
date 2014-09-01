@@ -333,7 +333,6 @@ void Skeleton::drawComponent(bone* root, GLUquadric* q) {
 
 	if(amcPlayerMode) {
 
-
 		glRotatef(root->rotz, 0, 0, 1);
 		glRotatef(root->roty, 0, 1, 0);
 		glRotatef(root->rotx, 1, 0, 0);
@@ -414,7 +413,6 @@ void Skeleton::drawComponent(bone* root, GLUquadric* q) {
 
 bool Skeleton::readPose(char* filename) {
 
-	//scan lines based on DOF
 	FILE* file = fopen(filename,"r");
 	if(file == NULL) {
 		printf("Failed to open file %s\n",filename);
@@ -442,20 +440,56 @@ bool Skeleton::readPose(char* filename) {
 
 				if(strncmp(name,root[j].name,strlen(root[j].name)) == 0) {
 
-					sscanf(transformations, "%f %f %f %f %f %f", &tx, &ty, &tz, &x, &y, &z);
+					if(strcmp("root",root[j].name) == 0) {
 
-					boneOp* op = new boneOp();
+						sscanf(transformations, "%f %f %f %f %f %f", &tx, &ty, &tz, &x, &y, &z);
 
-					op->rotx = x;
-					op->roty = y;
-					op->rotz = z;
+						boneOp* op = new boneOp();
 
-					op->tranx = tx;
-					op->trany = ty;
-					op->tranz = tz;
+						op->rotx = x;
+						op->roty = y;
+						op->rotz = z;
 
-					root->animationFrame[frameCount] = *op;
-					break;
+						op->tranx = tx;
+						op->trany = ty;
+						op->tranz = tz;
+
+						root->animationFrame[frameCount] = *op;
+
+						root->currentRotationx = x;
+						root->currentRotationy = y;
+						root->currentRotationz = z;
+
+						root->currentTranslatex = tx;
+						root->currentTranslatey = ty;
+						root->currentTranslatez = tz;
+
+						break;
+
+					} else {
+
+						sscanf(transformations, "%f %f %f %f %f %f", &tx, &ty, &tz, &x, &y, &z);
+
+						boneOp* op = new boneOp();
+
+						op->rotx = x;
+						op->roty = y;
+						op->rotz = z;
+
+						op->tranx = tx;
+						op->trany = ty;
+						op->tranz = tz;
+						//TODO was this a problem?
+						root[j].animationFrame[frameCount] = *op;
+
+						root[j].currentRotationx = x;
+						root[j].currentRotationy = y;
+						root[j].currentRotationz = z;
+
+						break;
+					}
+
+
 			}
 		}
 	}
@@ -504,9 +538,9 @@ void Skeleton::readRootToMap(bone* root) {
 
 	char* result = root->name;
 	//the angles
-	float rotx = root->currentRotationx + root->rotx;
-	float roty = root->currentRotationy + root->roty;
-	float rotz = root->currentRotationz + root->rotz;
+	float rotx = root->currentRotationx;
+	float roty = root->currentRotationy;
+	float rotz = root->currentRotationz;
 	float transx = root->currentTranslatex;
 	float transy = root->currentTranslatey;
 	float transz = root->currentTranslatez;

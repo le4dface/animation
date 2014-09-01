@@ -414,7 +414,7 @@ void G308_keyboardListener(unsigned char key, int x, int y) {
 	switch (key) {
 
 		case 'l':
-			readPose("check");
+			readPose("ok");
 			break;
 		case 'r':
 			if(!skeleton->amcPlayerMode) {
