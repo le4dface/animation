@@ -375,41 +375,21 @@ void Skeleton::drawComponent(bone* root, GLUquadric* q) {
 			root->length * root->dirz);
 	//done.
 
+
+	//apply colourpicking rotations
 	if(!amcPlayerMode) {
 
-		if (selected != NULL) {
-			if (strcmp(root->name, selected->name) == 0) {
-
-					quat = eulerToQuat(
-							selected->currentRotationx,
-							selected->currentRotationy,
-							selected->currentRotationz
-							);
-					quat->toMatrix(quatMatrix);
-					glMultMatrixf(quatMatrix);
-//					glRotatef(selected->currentRotationx, 1.0, 0.0, 0.0);
-//					glRotatef(selected->currentRotationy, 0.0, 1.0, 0.0);
-//					glRotatef(selected->currentRotationz, 0.0, 0.0, 1.0);
-
-			} else {
-
-//				glRotatef(root->currentRotationx, 1.0, 0.0, 0.0);
-//				glRotatef(root->currentRotationy, 0.0, 1.0, 0.0);
-//				glRotatef(root->currentRotationz, 0.0, 0.0, 1.0);
-
-				quat = eulerToQuat(
-						root->currentRotationx,
-						root->currentRotationy,
-						root->currentRotationz
-						);
-				quat->toMatrix(quatMatrix);
-				glMultMatrixf(quatMatrix);
-
-			}
+		quat = eulerToQuat(
+				root->currentRotationx,
+				root->currentRotationy,
+				root->currentRotationz
+				);
+		quat->toMatrix(quatMatrix);
+		glMultMatrixf(quatMatrix);
 
 		}
 	}
-}
+
 
 bool Skeleton::readPose(char* filename) {
 

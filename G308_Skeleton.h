@@ -108,13 +108,13 @@ private:
 public:
 
 	//sigh, had to do this for writing the bones to file in correct order...
-	const char* boneNames[29] = {
+	const char* boneNames[31] = {
 			"root","lowerback","upperback",
 			"thorax","lowerneck","upperneck",
-			"head","rclavicle","rhumerus",
+			"head","rclavicle","rhipjoint","rhumerus",
 			"rradius","rwrist","lhumerus",
 			"rfingers","rthumb","lclavicle",
-			"lhumerus","lradius","lwrist",
+			"lhipjoint","lhumerus","lradius","lwrist",
 			"lhand","lfingers","lthumb",
 			"rfemur","rtibia","rfoot",
 			"rtoes","lfemur", "ltibia",
