@@ -182,14 +182,14 @@ void Skeleton::play() {
 	amcFrame++;
 
 	if (amcFrame > frameCount) {
-		amcFrame = 1;
+		amcFrame = 0;
 	}
 
 }
 void Skeleton::pause() {}
 void Skeleton::stop() {
 
-	amcFrame = 1;
+	amcFrame = 0;
 
 }
 void Skeleton:: rewind() {
@@ -198,7 +198,7 @@ void Skeleton:: rewind() {
 	amcFrame-=4;
 
 	if (amcFrame < 1) {
-		amcFrame = 1;
+		amcFrame = 0;
 	}
 
 }
@@ -208,7 +208,7 @@ void Skeleton::fastforward() {
 	amcFrame+=4;
 
 	if (amcFrame > frameCount) {
-		amcFrame = 1;
+		amcFrame = 0;
 	}
 }
 

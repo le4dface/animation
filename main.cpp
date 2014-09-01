@@ -88,7 +88,7 @@ Skeleton* skeletonDefault = NULL;
 FileIO* fileInput = NULL;
 
 int main(int argc, char** argv) {
-	if (argc < 2 || argc > 3) {
+	if (argc < 2) {
 		//Usage instructions for core and challenge
 		printf("Usage\n");
 		printf("./Ass2 priman.asf [priman.amc]\n");
@@ -114,9 +114,14 @@ int main(int argc, char** argv) {
 		fileInput->readASF(argv[1]);
 		skeleton->amcPlayerMode = false;
 		if (argc > 2) {
-			fileInput->readAMC(argv[2]);
-			skeleton->amcPlayerMode = true;
-			skeleton->frameCount = fileInput->frameCount;
+//			fileInput->readAMC(argv[2]);
+//			skeleton->amcPlayerMode = true;
+//			skeleton->frameCount = fileInput->frameCount;
+			int i=2;
+			while(i<argc) {
+				readPose(argv[i]);
+				i++;
+			}
 		}
 	}
 
@@ -426,12 +431,6 @@ void onDrag(int x, int y) {
 void G308_keyboardListener(unsigned char key, int x, int y) {
 
 	switch (key) {
-
-		case 'l':
-			readPose("sitting");
-			readPose("walker");
-			readPose("kicking");
-			break;
 		case 'r':
 			if(!skeleton->amcPlayerMode) {
 				glRotatef(5,0,1,0);
