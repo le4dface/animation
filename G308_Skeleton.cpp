@@ -41,7 +41,7 @@ Skeleton::Skeleton() {
 	amcPlayerMode = false;
 	selected = NULL;
 	frameCount = 0;
-	amcFrame = 1;
+	amcFrame = 0;
 	angle = 0;
 	root = (bone*) malloc(sizeof(bone) * maxBones);
 
@@ -379,13 +379,27 @@ void Skeleton::drawComponent(bone* root, GLUquadric* q) {
 	//apply colourpicking rotations
 	if(!amcPlayerMode) {
 
+		boneOp b = root->animationFrame[amcFrame];
+
 		quat = eulerToQuat(
-				root->currentRotationx,
-				root->currentRotationy,
-				root->currentRotationz
+				b.rotx,
+				b.roty,
+				b.rotz
 				);
 		quat->toMatrix(quatMatrix);
 		glMultMatrixf(quatMatrix);
+
+//		if(selected) {
+////			if(strcmp(selected->name,root->name)==0) {
+//				quat = eulerToQuat(
+//						root->currentRotationx,
+//						root->currentRotationy,
+//						root->currentRotationz
+//						);
+//				quat->toMatrix(quatMatrix);
+//				glMultMatrixf(quatMatrix);
+////			}
+//		}
 
 		}
 	}

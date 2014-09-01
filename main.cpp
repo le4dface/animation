@@ -356,16 +356,20 @@ void onDrag(int x, int y) {
 	float magnitude = sqrt(x*x + y*y);
 
 	if(right_button_state == 1) {
-
+		/*
+		 * Welcome to terrible C++ programming with reuben!
+		 */
 		if (skeleton->selected != NULL) {
 			if (skeleton->selected->parent != NULL) {
 				//if the mouse is generally moving in a positive direction
+				boneOp b = skeleton->selected->parent->animationFrame[skeleton->amcFrame];
 				switch (skeleton->currentAxis) {
 					case X:
+
 						if(magnitude > oldMagnitude) {
-							skeleton->selected->parent->currentRotationx += 1;
+							b.rotx += 1;
 						} else {
-							skeleton->selected->parent->currentRotationx -= 1;
+							b.rotx -= 1;
 						}
 						printf("joint: %s, rotX: %f\n",
 								skeleton->selected->name,
@@ -374,9 +378,9 @@ void onDrag(int x, int y) {
 					case Y:
 
 						if(magnitude > oldMagnitude) {
-							skeleton->selected->parent->currentRotationy += 1;
+							b.roty += 1;
 						} else {
-							skeleton->selected->parent->currentRotationy -= 1;
+							b.roty -= 1;
 						}
 
 						printf("joint: %s, rotY: %f\n",
@@ -386,9 +390,9 @@ void onDrag(int x, int y) {
 					case Z:
 
 						if(magnitude > oldMagnitude) {
-							skeleton->selected->parent->currentRotationz += 1;
+							b.rotz+= 1;
 						} else {
-							skeleton->selected->parent->currentRotationz -= 1;
+							b.rotz -= 1;
 						}
 						printf("joint: %s, rotZ: %f\n",
 								skeleton->selected->name,
@@ -396,8 +400,18 @@ void onDrag(int x, int y) {
 						break;
 					default:
 						break;
+
 				}
 
+				/*
+				 * animationFrame array contains a boneOperation struct that has
+				 * rotations for x, y, z for the selected bone. We must make sure that
+				 * the program knows what frame we are selected bones on...
+				 */
+				skeleton->selected->parent->animationFrame[skeleton->amcFrame] = b;
+				/*
+				 * End terrible C++ programming with reuben!
+				 */
 			}
 		}
 	}
@@ -414,7 +428,9 @@ void G308_keyboardListener(unsigned char key, int x, int y) {
 	switch (key) {
 
 		case 'l':
+			readPose("sitting");
 			readPose("walker");
+			readPose("kicking");
 			break;
 		case 'r':
 			if(!skeleton->amcPlayerMode) {

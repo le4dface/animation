@@ -85,7 +85,7 @@ class Skeleton {
 private:
 
 	float angle;
-	int amcFrame;
+
 
 	int buffSize, maxBones;
 	float quatMatrix[16];
@@ -128,6 +128,7 @@ public:
 	bone* selected; //selected bones via colour picking
 	AXIS currentAxis = Y;
 	bool amcPlayerMode;
+	int amcFrame;
 	int numBones;
 	int frameCount;
 	TStrStrMap boneMap;
