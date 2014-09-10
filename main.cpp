@@ -79,7 +79,7 @@ void onMouse(int button, int state, int x, int y);
 void onDrag(int x, int y);
 
 void savePose();
-void readPose(char* filename);
+void readPose(int framenum, char* filename);
 
 void drawControlPoints();
 
@@ -91,7 +91,7 @@ int main(int argc, char** argv) {
 	if (argc < 2) {
 		//Usage instructions for core and challenge
 		printf("Usage\n");
-		printf("./Ass2 priman.asf [priman.amc]\n");
+		printf("./Ass2 priman.asf [config.txt]\n");
 		exit(EXIT_FAILURE);
 	}
 
@@ -108,20 +108,14 @@ int main(int argc, char** argv) {
 
 	// [Assignment2] : Read ASF file
 	if (argc > 1) {
+
 		filename = argv[1];
 		skeleton = new Skeleton();
 		fileInput = new FileIO(skeleton->root);
 		fileInput->readASF(argv[1]);
 		skeleton->amcPlayerMode = false;
-		if (argc > 2) {
-//			fileInput->readAMC(argv[2]);
-//			skeleton->amcPlayerMode = true;
-//			skeleton->frameCount = fileInput->frameCount;
-			int i=2;
-			while(i<argc) {
-				readPose(argv[i]);
-				i++;
-			}
+		if (argc > 2 ) {
+			skeleton->readConfig(argv[2]);
 		}
 	}
 
@@ -141,8 +135,8 @@ void savePose() {
 	skeleton->writePoseToFile();
 }
 
-void readPose(char* filename) {
-	skeleton->readPose(filename);
+void readPose(int framenum, char* filename) {
+	skeleton->readPose(framenum, filename);
 }
 
 
@@ -431,6 +425,10 @@ void onDrag(int x, int y) {
 void G308_keyboardListener(unsigned char key, int x, int y) {
 
 	switch (key) {
+
+		case 'o':
+
+			break;
 		case 'r':
 			if(!skeleton->amcPlayerMode) {
 				glRotatef(5,0,1,0);

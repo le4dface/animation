@@ -224,6 +224,7 @@ float dotproduct(const quaternion& q1, const quaternion& q2) {
 quaternion slerp(const quaternion& p1, const quaternion& q1, float t) {
 	quaternion q = q1.normalise();
 	quaternion p = p1.normalise();
+
 	float epsilon = 0.0001;
 	if (dotproduct(p, q) < 0) {
 		q = q * -1;

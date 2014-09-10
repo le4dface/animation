@@ -9,13 +9,13 @@
 // without the prior permission of its owner.
 //
 // Copyright (c) 2012 by Taehyun Rhee
-//
 // Edited by Roma Klapaukh, Daniel Atkins, and Taehyun Rhee
 //
 //---------------------------------------------------------------------------
 
 #include <string.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <GL/glut.h>
 #include <vector>
 #include <map>
@@ -153,7 +153,6 @@ void Skeleton::display() {
 					glVertex3f((x+1)*SizeX,0,    z*SizeZ);
 					glVertex3f((x+1)*SizeX,0,(z+1)*SizeZ);
 					glVertex3f(    x*SizeX,0,(z+1)*SizeZ);
-
 				}
 
 			glEnd();
@@ -236,11 +235,13 @@ void Skeleton::animationRotation(bone* bone) {
 
 }
 
+
 void Skeleton::drawComponent(bone* root, GLUquadric* q) {
 
 	if (root == NULL) {
 		return;
 	}
+
 	quaternion* quat;
 	float quatMatrix[16];
 	quat = eulerToQuat(
@@ -251,30 +252,9 @@ void Skeleton::drawComponent(bone* root, GLUquadric* q) {
 
 	quat->toMatrix(quatMatrix);
 
-
 	//draw the joint
 	glPushMatrix();
 	//rotate the socket/joint appropriately
-
-	if(amcPlayerMode) {
-		glRotatef(root->rotz, 0, 0, 1);
-		glRotatef(root->roty, 0, 1, 0);
-		glRotatef(root->rotx, 1, 0, 0);
-//		glMultMatrixf(quatMatrix);
-		//amc
-		animationRotation(root);
-
-//		quat->multiplicativeInverse().toMatrix(quatMatrix);
-//
-//		glMultMatrixf(quatMatrix);
-
-		glRotatef(-root->rotx, 1, 0, 0);
-		glRotatef(-root->roty, 0, 1, 0);
-		glRotatef(-root->rotz, 0, 0, 1);
-		//amc end
-
-	}
-
 
 	glColor3f(root->id.r / 255.0f, root->id.g / 255.0f, root->id.b / 255.0f);
 
@@ -288,63 +268,43 @@ void Skeleton::drawComponent(bone* root, GLUquadric* q) {
 
 	glPopMatrix();
 
-
-	if(!amcPlayerMode) {
-
 		//only render the axis that is currently being rotated about
 		switch(currentAxis) {
 
 			case Y:
 				//draw the y-axis arrows
 				glPushMatrix();
-				glColor3f(1.0, 0.5, 0.0);
-				glRotatef(-90, 1, 0, 0);
-				gluCylinder(q, 0.1, 0.1, 1.5, 100, 100);
-				glTranslatef(0, 0, 1.5);
-				glutSolidCone(0.3, 0.8, 100, 100);
+					glColor3f(1.0, 0.5, 0.0);
+					glRotatef(-90, 1, 0, 0);
+					gluCylinder(q, 0.1, 0.1, 1.5, 100, 100);
+					glTranslatef(0, 0, 1.5);
+					glutSolidCone(0.3, 0.8, 100, 100);
 				glPopMatrix();
 			break;
 
 			case X:
 				//draw the x-axis arrows
 				glPushMatrix();
-				glColor3f(1, 0, 0);
-				glRotatef(90, 0, 1, 0);
-				gluCylinder(q, 0.1, 0.1, 1.5, 100, 100);
-				glTranslatef(0, 0, 1.5);
-				glutSolidCone(0.3, 0.8, 100, 100);
+					glColor3f(1, 0, 0);
+					glRotatef(90, 0, 1, 0);
+					gluCylinder(q, 0.1, 0.1, 1.5, 100, 100);
+					glTranslatef(0, 0, 1.5);
+					glutSolidCone(0.3, 0.8, 100, 100);
 				glPopMatrix();
 			break;
 
 			case Z:
 				//draw the z-axis arrows
 				glPushMatrix();
-				glColor3f(0, 0, 1);
-				glRotatef(90, 0, 0, 1);
-				gluCylinder(q, 0.1, 0.1, 1.5, 100, 100);
-				glTranslatef(0, 0, 1.5);
-				glutSolidCone(0.3, 0.8, 100, 100);
+					glColor3f(0, 0, 1);
+					glRotatef(90, 0, 0, 1);
+					gluCylinder(q, 0.1, 0.1, 1.5, 100, 100);
+					glTranslatef(0, 0, 1.5);
+					glutSolidCone(0.3, 0.8, 100, 100);
 				glPopMatrix();
 			break;
 
 		}
-
-	}
-
-	if(amcPlayerMode) {
-
-		glRotatef(root->rotz, 0, 0, 1);
-		glRotatef(root->roty, 0, 1, 0);
-		glRotatef(root->rotx, 1, 0, 0);
-
-		animationRotation(root);
-
-		glRotatef(-root->rotx, 1, 0, 0);
-		glRotatef(-root->roty, 0, 1, 0);
-		glRotatef(-root->rotz, 0, 0, 1);
-
-		//amc end
-	}
 
 	GLfloat angle = 0.0;
 
@@ -375,37 +335,59 @@ void Skeleton::drawComponent(bone* root, GLUquadric* q) {
 			root->length * root->dirz);
 	//done.
 
-
 	//apply colourpicking rotations
-	if(!amcPlayerMode) {
 
-		boneOp b = root->animationFrame[amcFrame];
+	boneOp b = root->animationFrame[amcFrame];
 
-		quat = eulerToQuat(
-				b.rotx,
-				b.roty,
-				b.rotz
-				);
-		quat->toMatrix(quatMatrix);
-		glMultMatrixf(quatMatrix);
+	quat = eulerToQuat(
+			b.rotx,
+			b.roty,
+			b.rotz
+			);
 
-//		if(selected) {
-////			if(strcmp(selected->name,root->name)==0) {
-//				quat = eulerToQuat(
-//						root->currentRotationx,
-//						root->currentRotationy,
-//						root->currentRotationz
-//						);
-//				quat->toMatrix(quatMatrix);
-//				glMultMatrixf(quatMatrix);
-////			}
-//		}
+	quat->toMatrix(quatMatrix);
+	glMultMatrixf(quatMatrix);
 
-		}
+
+}
+
+bool Skeleton::readConfig(char* filename) {
+
+	FILE* file = fopen(filename, "r");
+	if(file == NULL) {
+		printf("Failed to open config file %s\n", filename);
+		exit(EXIT_FAILURE);
 	}
 
+	char* buff = new char[buffSize];
+	printf("reading pose file in\n");
 
-bool Skeleton::readPose(char* filename) {
+	char* temp = buff;
+
+	char posename[50];
+	int frameNumber;
+
+	string delim = " ";
+
+	while(!feof(file)) {
+		fgets(buff,buffSize,file);
+		temp = buff;
+		sscanf(temp, "%d %s", &frameNumber, posename);
+//		printf("frame number:%i\nfilename: %s\n", frameNumber, posename);
+		readPose(frameNumber, posename);
+	}
+
+	delete[] buff;
+	fclose(file);
+	printf("completed reading\n");
+	return true;
+
+
+
+}
+
+
+bool Skeleton::readPose(int framenum, char* filename) {
 
 	FILE* file = fopen(filename,"r");
 	if(file == NULL) {
@@ -414,6 +396,7 @@ bool Skeleton::readPose(char* filename) {
 	}
 
 	char* buff = new char[buffSize];
+
 
 	printf("reading pose file in\n");
 
@@ -426,7 +409,7 @@ bool Skeleton::readPose(char* filename) {
 		for(int i=0; i < 29; i++) {
 			fgets(buff,buffSize,file);
 			temp = buff;
-			printf("tempee: %s\n", temp);
+//			printf("tempee: %s\n", temp);
 			sscanf(temp,"%s %[^\n]", name, transformations);
 //					printf("temp: %s\n", temp);
 
@@ -448,7 +431,7 @@ bool Skeleton::readPose(char* filename) {
 						op->trany = ty;
 						op->tranz = tz;
 
-						root->animationFrame[frameCount] = *op;
+						root->animationFrame[framenum] = *op;
 
 						root->currentRotationx = x;
 						root->currentRotationy = y;
@@ -474,7 +457,7 @@ bool Skeleton::readPose(char* filename) {
 						op->trany = ty;
 						op->tranz = tz;
 						//TODO was this a problem?
-						root[j].animationFrame[frameCount] = *op;
+						root[j].animationFrame[framenum] = *op;
 
 						root[j].currentRotationx = x;
 						root[j].currentRotationy = y;
@@ -672,6 +655,9 @@ bone* Skeleton::findBoneById(bone* root, unsigned char * pixel) {
 
 }
 
+
+
+
 // [Assignment2] you need to fill this function
 // CORE: MODIFY TO DISPLAY PRIMAN.ASF; READ INTO ARRAY; DRAW WHOLE SKELETON
 void Skeleton::display(bone* root, GLUquadric* q) {
@@ -693,6 +679,8 @@ void Skeleton::display(bone* root, GLUquadric* q) {
 	glPopMatrix();
 
 }
+
+
 
 void Skeleton::findUV(const G308_Point& v2, const G308_Point& v1,
 		const G308_Point& v3, G308_Point& u, G308_Point& v) {

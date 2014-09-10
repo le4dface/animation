@@ -86,7 +86,6 @@ private:
 
 	float angle;
 
-
 	int buffSize, maxBones;
 	float quatMatrix[16];
 	quaternion* quat;
@@ -128,6 +127,7 @@ public:
 	bone* selected; //selected bones via colour picking
 	AXIS currentAxis = Y;
 	bool amcPlayerMode;
+
 	int amcFrame;
 	int numBones;
 	int frameCount;
@@ -135,6 +135,7 @@ public:
 	TStrStrMap::iterator it;
 
 	void display();
+
 
 	//glut menu controls, probably need refactoring
 	void play();
@@ -148,7 +149,8 @@ public:
 	bone* findBoneById(unsigned char * pixel);
 	bone* traverseHierachy();
 	void writePoseToFile();
-	bool readPose(char* filename);
+	bool readPose(int framenum, char* filename);
+	bool readConfig(char* filename);
 	Skeleton();
 	~Skeleton();
 	void readRootToMap(bone* root);

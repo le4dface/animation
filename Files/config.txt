@@ -1,0 +1,5 @@
+0 sitting
+1 walker
+2 kicking
+3 walker
+4 sitting
