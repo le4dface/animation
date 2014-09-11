@@ -68,6 +68,8 @@ void G308_display();
 void G308_init();
 void G308_SetCamera();
 void G308_SetLight();
+void angleToText();
+boneOp getTargetBone();
 void displayText( float x, float y, int r, int g, int b, const char *string);
 
 void createMenu();
@@ -111,6 +113,7 @@ int main(int argc, char** argv) {
 		fileInput->readASF(argv[1]);
 		skeleton->amcPlayerMode = false;
 		if (argc > 2 ) {
+			skeleton->amcPlayerMode = true;
 			skeleton->readConfig(argv[2]);
 		}
 	}
@@ -126,7 +129,6 @@ int main(int argc, char** argv) {
 
 
 void savePose() {
-
 	skeleton->traverseHierachy();
 	skeleton->writePoseToFile();
 }
@@ -134,7 +136,6 @@ void savePose() {
 void readPose(int framenum, char* filename) {
 	skeleton->readPose(framenum, filename);
 }
-
 
 //GLUT menu constructor
 void createMenu() {
@@ -159,6 +160,21 @@ void G308_init() {
 	G308_SetCamera();
 }
 
+void angleToText() {
+	//what joint has been selected?
+	char* result = skeleton->selected->name;
+	//the angles
+	glm::vec3 r = glm::eulerAngles(getTargetBone().startQuat);
+	float rotx = r.x;
+	float roty = r.y;
+	float rotz = r.z;
+	//concat the data to make a string for printing
+	char buffer[100];
+	sprintf(buffer, "Bone: %s (rotx: %.2f, roty: %.2f, rotz: %.2f)", result,
+			rotx, roty, rotz); // puts string into buffer
+	displayText(-0.95f, 0.9f, 255, 255, 255, buffer);
+}
+
 void drawBoneText() {
 	//TEXT
 	glMatrixMode(GL_PROJECTION);
@@ -177,20 +193,7 @@ void drawBoneText() {
 
 	if (skeleton->selected != NULL) {
 		if (skeleton->selected->parent != NULL) {
-
-			//what joint has been selected?
-			char* result = skeleton->selected->name;
-			//the angles
-			glm::vec3 r = glm::eulerAngles(skeleton->selected->parent->animationFrame[skeleton->amcFrame].startQuat);
-
-			float rotx = r.x;
-			float roty = r.y;
-			float rotz = r.z;
-
-			//concat the data to make a string for printing
-			char buffer[100];
-			sprintf(buffer, "Bone: %s (rotx: %.2f, roty: %.2f, rotz: %.2f)", result, rotx, roty, rotz); // puts string into buffer
-			displayText(-0.95f, 0.9f, 255, 255, 255, buffer);
+			angleToText();
 		}
 	}
 	glEnable (GL_LIGHTING);
@@ -219,7 +222,6 @@ void G308_display() {
 		G308_SetCamera();
 	}
 
-
 	// [Assignmet2] : render skeleton
 	if (skeleton != NULL) {
 		skeleton->display();
@@ -229,10 +231,8 @@ void G308_display() {
 		glPopMatrix();
 	}
 
-
 	//TEXT
 	drawBoneText();
-
 
 	switch(selected_mode) {
 
@@ -251,7 +251,6 @@ void G308_display() {
 		case FAST_FORWARD:
 			skeleton->fastforward();
 			break;
-
 	}
 
 	glDisable(GL_DEPTH_TEST);
@@ -260,9 +259,6 @@ void G308_display() {
 
 	glutSwapBuffers();
 	G308_SetLight();
-
-
-
 }
 
 
@@ -280,7 +276,6 @@ void onMouse(int button, int state, int x, int y) {
 			return;
 		}
 
-
 		//check that ctrl has been pressed to select joint
 	    mod = glutGetModifiers();
 	    if (mod == (GLUT_ACTIVE_CTRL)) {
@@ -294,8 +289,7 @@ void onMouse(int button, int state, int x, int y) {
 				skeleton->display();
 				glEnable(GL_SCISSOR_TEST);
 					glScissor(x, y, 1, 1);
-					glReadPixels(x, g_nWinHeight - y, 1, 1, GL_RGB, GL_UNSIGNED_BYTE,
-								pixel);
+					glReadPixels(x, g_nWinHeight - y, 1, 1, GL_RGB, GL_UNSIGNED_BYTE,pixel);
 					glEnable(GL_LIGHT0);
 				glDisable(GL_SCISSOR_TEST);
 				//currently selected bone
@@ -304,7 +298,6 @@ void onMouse(int button, int state, int x, int y) {
 				}
 			}
 	    }
-
 	}
 
 	if(button == GLUT_RIGHT_BUTTON) {
@@ -314,6 +307,21 @@ void onMouse(int button, int state, int x, int y) {
 	}
 
 }
+
+void rotateBone(float magnitude, float xamount,float yamount, float zamount, boneOp& b) {
+	if (magnitude > oldMagnitude) {
+		glm::quat change = glm::quat(glm::vec3(xamount, yamount, zamount));
+		b.startQuat *= change;
+	} else {
+		glm::quat change = glm::quat(glm::vec3(-xamount, -yamount, -zamount));
+		b.startQuat *= change;
+	}
+}
+
+boneOp getTargetBone() {
+	return skeleton->selected->parent->animationFrame[skeleton->amcFrame];
+}
+
 //On mouse motion callback, used for rotating selected joints
 void onDrag(int x, int y) {
 	//what we really want is the magnitude of the mouse movement
@@ -327,52 +335,23 @@ void onDrag(int x, int y) {
 		if (skeleton->selected != NULL) {
 			if (skeleton->selected->parent != NULL) {
 				//if the mouse is generally moving in a positive direction
-				boneOp b = skeleton->selected->parent->animationFrame[skeleton->amcFrame];
-//				glm::vec3 r = glm::eulerAngles(skeleton->selected->parent->animationFrame[skeleton->amcFrame].startQuat);
-
+				boneOp b = getTargetBone();
 				float amount = 0.01;
-
 				switch (skeleton->currentAxis) {
 					case X:
-						if(magnitude > oldMagnitude) {
-							glm:: quat change = glm::quat(glm::vec3(amount, 0, 0));
-							b.startQuat *= change;
-						} else {
-							glm:: quat change = glm::quat(glm::vec3(-amount, 0, 0));
-							b.startQuat *= change;
-						}
+						rotateBone(magnitude,amount,0,0,b);
 						break;
 					case Y:
-						if(magnitude > oldMagnitude) {
-							glm:: quat change = glm::quat(glm::vec3(0, amount, 0));
-							b.startQuat *= change;
-						} else {
-							glm:: quat change = glm::quat(glm::vec3(0, -amount, 0));
-							b.startQuat *= change;
-						}
+						rotateBone(magnitude,0,amount,0,b);
 						break;
 					case Z:
-						if(magnitude > oldMagnitude) {
-							glm:: quat change = glm::quat(glm::vec3(0, 0, amount));
-							b.startQuat *= change;
-						} else {
-							glm:: quat change = glm::quat(glm::vec3(0, 0, -amount));
-							b.startQuat *= change;
-						}
+						rotateBone(magnitude,0,0,amount,b);
 						break;
 					default:
 						break;
 				}
 
-				/*
-				 * animationFrame array contains a boneOperation struct that has
-				 * rotations for x, y, z for the selected bone. We must make sure that
-				 * the program knows what frame we are selected bones on...
-				 */
 				skeleton->selected->parent->animationFrame[skeleton->amcFrame] = b;
-				/*
-				 * End terrible C++ programming with reuben!
-				 */
 			}
 		}
 	}
@@ -388,9 +367,6 @@ void G308_keyboardListener(unsigned char key, int x, int y) {
 
 	switch (key) {
 
-		case 'o':
-			skeleton->amcFrameFloat += 0.05;
-			break;
 		case 'r':
 			if(!skeleton->amcPlayerMode) {
 				glRotatef(5,0,1,0);
@@ -400,7 +376,9 @@ void G308_keyboardListener(unsigned char key, int x, int y) {
 			savePose();
 			break;
 		case 'f':
-			skeleton->play();
+			if(skeleton->amcPlayerMode) {
+				skeleton->play();
+			}
 			break;
 		case 'a':
 			yRot += 1;
@@ -450,42 +428,32 @@ void G308_SetCamera() {
 	glLoadIdentity();
 
 	glPushMatrix();
-
-
-		glTranslatef(0.0,0.0,-zoom);
-
-		glRotatef(skeleton->cameraRotation.y + yRot,0,1,0);
-
-		cameraPosition = skeleton->cameraTranslation;
-
-	//	printf("X %f, Y %f, Z %f", eyeX, eyeY, eyeZ);
-		gluLookAt(
-				cameraPosition.x,
-				cameraPosition.y,
-				cameraPosition.z,
-				cameraPosition.x,
-				cameraPosition.y,
-				cameraPosition.z - zoom,
-				0.0, 1.0, 0.0);
-
-
+	glTranslatef(0.0,0.0,-zoom);
+	glRotatef(skeleton->cameraRotation.y + yRot,0,1,0);
+	cameraPosition = skeleton->cameraTranslation;
+	gluLookAt(
+			cameraPosition.x,
+			cameraPosition.y,
+			cameraPosition.z,
+			cameraPosition.x,
+			cameraPosition.y,
+			cameraPosition.z - zoom,
+			0.0, 1.0, 0.0
+			);
 }
 // Set View Position
 void G308_SetLight() {
 	float direction[] = { lightX, lightY, lightZ, 1.0f };
 	float diffintensity[] = { 1.0f, 1.0f, 1.0f, 1.0f };
 	float ambient[] = { 0.8f, 0.8f, 0.8f, 1.0f };
-
 	glLightfv(GL_LIGHT0, GL_POSITION, direction);
 	glLightfv(GL_LIGHT0, GL_DIFFUSE, diffintensity);
 	glLightfv(GL_LIGHT0, GL_AMBIENT, ambient);
-
 	glEnable(GL_LIGHT0);
 }
 
 void displayText( float x, float y, int r, int g, int b, char const* string ) {
 	int j = strlen( string );
-
 	glColor3f( 255, 255, 255 );
 	glRasterPos2f( x, y );
 	for( int i = 0; i < j; i++ ) {

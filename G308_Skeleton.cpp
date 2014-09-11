@@ -110,32 +110,7 @@ void Skeleton::display() {
 	gColorId = {0, 220, 220};
 	glMatrixMode(GL_MODELVIEW);
 	glPushMatrix();
-    // Begin drawing the floor
-	   	unsigned int GridSizeX = 64;
-		unsigned int GridSizeZ = 64;
-		unsigned int SizeX = 8;
-		unsigned int SizeZ = 8;
 
-		if(amcPlayerMode) {
-		glPushMatrix();
-			glTranslatef(-64*4,0,-64*4);
-			glBegin(GL_QUADS);
-			for (unsigned int x=0;x<GridSizeX;++x)
-				for (unsigned int z=0;z<GridSizeZ;++z)
-				{
-					if ((x+z) % 2 == 0) //modulo 2
-						glColor3f(0.8f,0.8f,0.8f); //white
-					else
-						glColor3f(0.1f,0.1f,0.1f); //black
-
-					glVertex3f(    x*SizeX,0,    z*SizeZ);
-					glVertex3f((x+1)*SizeX,0,    z*SizeZ);
-					glVertex3f((x+1)*SizeX,0,(z+1)*SizeZ);
-					glVertex3f(    x*SizeX,0,(z+1)*SizeZ);
-				}
-			glEnd();
-		glPopMatrix();
-		}
 	GLUquadric* quad = gluNewQuadric(); //Create a new quadric to allow you to draw cylinders
 	if (quad == 0) {
 		printf("Not enough memory to allocate space to draw\n");
@@ -150,19 +125,23 @@ void Skeleton::display() {
 void Skeleton::play() {
 
 	// Move AMC animation one frame forward.
-	amcFrame++;
-
-	if (amcFrame >= frameCount) {
-		amcFrame = 0;
-	}
+	amcFrameFloat+=0.05;
 
 }
 void Skeleton::pause() {}
 void Skeleton::stop() {
-	amcFrame = 0;
+	amcFrameFloat = 0;
 }
-void Skeleton:: rewind() {}
-void Skeleton::fastforward() {}
+void Skeleton:: rewind() {
+
+	amcFrameFloat-=0.09;
+
+}
+void Skeleton::fastforward() {
+
+	amcFrameFloat += 0.09;
+
+}
 
 void Skeleton::drawComponent(bone* root, GLUquadric* q) {
 
@@ -248,13 +227,17 @@ void Skeleton::drawComponent(bone* root, GLUquadric* q) {
 			root->length * root->dir.z);
 	//done.
 
-	//apply colourpicking rotations
-
-	int roundedFrame = (int) amcFrameFloat;
-	boneOp b = root->animationFrame[roundedFrame % frameCount];
-	boneOp c = root->animationFrame[(roundedFrame+1) % frameCount];
-	glm::quat result = glm::slerp(b.startQuat, c.startQuat, amcFrameFloat - roundedFrame);
-	glMultMatrixf(&glm::mat4_cast(result)[0][0]);
+	//if we have a config file provided that start slerping
+	if(amcPlayerMode) {
+		int roundedFrame = (int) amcFrameFloat;
+		boneOp b = root->animationFrame[roundedFrame % frameCount];
+		boneOp c = root->animationFrame[(roundedFrame+1) % frameCount];
+		glm::quat result = glm::slerp(b.startQuat, c.startQuat, amcFrameFloat - roundedFrame);
+		glMultMatrixf(&glm::mat4_cast(result)[0][0]);
+	} else { //else we just want to update the joint rotations
+		boneOp b = root->animationFrame[amcFrame];
+		glMultMatrixf(&glm::mat4_cast(b.startQuat)[0][0]);
+	}
 
 }
 
