@@ -60,8 +60,6 @@ float lightZ = 200;
 
 int arcball_on = false;
 
-vector<G308_Point> controlPoints;
-
 G308_Point cameraPosition = {0.0,10.0,20.0};
 
 void G308_keyboardListener(unsigned char, int, int);
@@ -80,8 +78,6 @@ void onDrag(int x, int y);
 
 void savePose();
 void readPose(int framenum, char* filename);
-
-void drawControlPoints();
 
 Skeleton* skeleton = NULL;
 Skeleton* skeletonDefault = NULL;
@@ -225,7 +221,6 @@ void G308_display() {
 		G308_SetCamera();
 	}
 
-//	drawControlPoints();
 
 	// [Assignmet2] : render skeleton
 	if (skeleton != NULL) {
@@ -273,28 +268,6 @@ void G308_display() {
 }
 
 
-void drawControlPoints() {
-
-
-	//	printf("drawing..");
-		glColor3f(1.0, 1.0, 1.0);
-		glPointSize(20.0);
-		glBegin(GL_POINTS);
-
-		int length = controlPoints.size();
-
-		for(std::vector<float>::size_type i = 0; i != length; i++) {
-			/* std::cout << someVector[i]; ... */
-			G308_Point vec = controlPoints[i];
-	//		printf("vec x: %f, vec y: %f", vec.x, vec.y);
-		}
-
-		glEnd();
-//		glutSwapBuffers();
-
-
-}
-
 // On mouse click call back, used for selected bones
 void onMouse(int button, int state, int x, int y) {
 
@@ -309,11 +282,6 @@ void onMouse(int button, int state, int x, int y) {
 			return;
 		}
 
-		G308_Point controlPoint;
-		controlPoint.x = x; controlPoint.y = g_nWinHeight -y;
-		controlPoints.push_back(controlPoint);
-
-		printf("control point added: x:%f, y:%f", controlPoint.x, controlPoint.y);
 
 		//check that ctrl has been pressed to select joint
 	    mod = glutGetModifiers();
