@@ -260,38 +260,14 @@ void FileIO::readBone(char* buff, FILE* file) {
 	}
 }
 
+glm::quat FileIO::rotationDataToQuaternion(float x, float y, float z) {
+	return glm::quat(glm::vec3(degreesToRad(x), degreesToRad(y), degreesToRad(z)));
+}
+
 float FileIO::degreesToRad(float rx) {
 	rx = (M_PI * rx) / 180;
 	return rx;
 }
-
-quaternion* FileIO::eulerToQuat(float rx, float ry, float rz) {
-
-	rx = degreesToRad(rx);
-	ry = degreesToRad(ry);
-	rz = degreesToRad(rz);
-
-	float bank,heading,attitude;
-	float c1, c2, c3;
-	float s1, s2, s3;
-	float w, x, y, z;
-
-	bank = rx; heading = ry; attitude = rz;
-	c1 = cos(heading/2); c2 = cos(attitude/2); c3 = cos(bank/2);
-	s1 = sin(heading/2); s2 = sin(attitude/2); s3 = sin(bank/2);
-
-    w = sqrt(1.0 + c1 * c2 + c1*c3 - s1 * s2 * s3 + c2*c3) / 2.0;
-	float w4 = (4.0 * w);
-	x = (c2 * s3 + c1 * s3 + s1 * s2 * c3) / w4 ;
-	y = (s1 * c2 + s1 * c3 + c1 * s2 * s3) / w4 ;
-	z = (-s1 * s3 + c1 * s2 * c3 +s2) / w4 ;
-
-	quaternion* q = new quaternion(w,x,y,z);
-
-	return q;
-}
-
-
 
 bool FileIO::readAMC(char* filename) {
 
@@ -391,18 +367,9 @@ bool FileIO::readAMC(char* filename) {
 
 									boneOp* op = new boneOp();
 									op->tran = glm::vec3(tx, ty, tz);
-									op->startQuat = glm::quat(glm::vec3(degreesToRad(x), degreesToRad(y), degreesToRad(z)));
+									op->startQuat = rotationDataToQuaternion(x,y,z);
 
 									root->animationFrame[frameCount] = *op;
-
-//									root->currentTranslatex = tx;
-//									root->currentTranslatey = tx;
-//									root->currentTranslatez = tz;
-//
-//									root->currentRotationx = x;
-//									root->currentRotationy = y;
-//									root->currentRotationz = z;
-
 
 									break;
 

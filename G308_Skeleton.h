@@ -160,6 +160,7 @@ public:
 	void readRootToMap(bone* root);
 	void readBoneToMap(bone* root);
 	float degreesToRad(float rx);
+	glm::quat rotationDataToQuaternion(float x, float y, float z);
 };
 
 #endif

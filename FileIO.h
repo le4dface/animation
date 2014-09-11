@@ -43,7 +43,7 @@ public:
 	void readHierarchy(char* buff, FILE* file);
 	void readBone(char* buff, FILE* file);
 	DOF dofFromString(char* s);
-	quaternion* eulerToQuat(float rx, float ry, float rz);
+	glm::quat rotationDataToQuaternion(float x, float y, float z);
 	float degreesToRad(float rx);
 
 };
