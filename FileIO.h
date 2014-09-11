@@ -5,7 +5,6 @@
 #include <GL/glut.h>
 #include <GL/glut.h>
 #include "G308_Skeleton.h"
-#include "quaternion.h"
 #include "glm/glm.hpp"
 // Using bitmasking to denote different degrees of freedom for joint motion
 typedef int DOF;

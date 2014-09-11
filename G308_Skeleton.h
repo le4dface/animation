@@ -25,7 +25,6 @@
 #include "define.h"
 #include <math.h>
 #include <map>
-#include "quaternion.h"
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtx/euler_angles.hpp>
@@ -96,7 +95,6 @@ private:
 	void animationRotation(bone*);
 	void deleteBones(bone*);
 	void display(bone*, GLUquadric*);
-
 	void dotProductAngle(const G308_Point& v1, const G308_Point& v2, float& temp);
 	void calcCrossProduct(const G308_Point& u, const G308_Point& v,G308_Normal& temp);//helper method for calculating vector cross product
 	void findUV(const G308_Point& v2, const G308_Point& v1, const G308_Point& v3, G308_Point& u, G308_Point& v);//helper find edges of triangle UV
@@ -139,15 +137,12 @@ public:
 	TStrStrMap::iterator it;
 
 	void display();
-
-
 	//glut menu controls, probably need refactoring
 	void play();
 	void pause();
 	void rewind();
 	void fastforward();
 	void stop();
-	quaternion* eulerToQuat(float x, float y, float z);
 	void readAMC(FILE*,int*);
 	bone* findBoneByName(char *name);
 	bone* findBoneById(unsigned char * pixel);

@@ -24,7 +24,6 @@
 #include "G308_Skeleton.h"
 #include "quaternion.h"
 
-
 #include "define.h"
 
 using namespace std;
@@ -125,16 +124,17 @@ void Skeleton::display() {
 void Skeleton::play() {
 
 	// Move AMC animation one frame forward.
-	amcFrameFloat+=0.05;
+	amcFrameFloat += 0.05;
 
 }
-void Skeleton::pause() {}
+void Skeleton::pause() {
+}
 void Skeleton::stop() {
 	amcFrameFloat = 0;
 }
-void Skeleton:: rewind() {
+void Skeleton::rewind() {
 
-	amcFrameFloat-=0.09;
+	amcFrameFloat -= 0.09;
 
 }
 void Skeleton::fastforward() {
@@ -153,47 +153,47 @@ void Skeleton::drawComponent(bone* root, GLUquadric* q) {
 	glPushMatrix();
 	//rotate the socket/joint appropriately
 	glColor3f(root->id.r / 255.0f, root->id.g / 255.0f, root->id.b / 255.0f);
-	if(selected != NULL) {
-		if(strcmp(selected->name,root->name) == 0) {
-			glColor3f(1.0f,0.0f,1.0f);
+	if (selected != NULL) {
+		if (strcmp(selected->name, root->name) == 0) {
+			glColor3f(1.0f, 0.0f, 1.0f);
 		}
 	}
 	glutSolidSphere(1.0, 50, 50);
 	glPopMatrix();
 	//only render the axis that is currently being rotated about
-	switch(currentAxis) {
+	switch (currentAxis) {
 
-		case Y:
-			//draw the y-axis arrows
-			glPushMatrix();
-				glColor3f(1.0, 0.5, 0.0);
-				glRotatef(-90, 1, 0, 0);
-				gluCylinder(q, 0.1, 0.1, 1.5, 100, 100);
-				glTranslatef(0, 0, 1.5);
-				glutSolidCone(0.3, 0.8, 100, 100);
-			glPopMatrix();
+	case Y:
+		//draw the y-axis arrows
+		glPushMatrix();
+		glColor3f(1.0, 0.5, 0.0);
+		glRotatef(-90, 1, 0, 0);
+		gluCylinder(q, 0.1, 0.1, 1.5, 100, 100);
+		glTranslatef(0, 0, 1.5);
+		glutSolidCone(0.3, 0.8, 100, 100);
+		glPopMatrix();
 		break;
 
-		case X:
-			//draw the x-axis arrows
-			glPushMatrix();
-				glColor3f(1, 0, 0);
-				glRotatef(90, 0, 1, 0);
-				gluCylinder(q, 0.1, 0.1, 1.5, 100, 100);
-				glTranslatef(0, 0, 1.5);
-				glutSolidCone(0.3, 0.8, 100, 100);
-			glPopMatrix();
+	case X:
+		//draw the x-axis arrows
+		glPushMatrix();
+		glColor3f(1, 0, 0);
+		glRotatef(90, 0, 1, 0);
+		gluCylinder(q, 0.1, 0.1, 1.5, 100, 100);
+		glTranslatef(0, 0, 1.5);
+		glutSolidCone(0.3, 0.8, 100, 100);
+		glPopMatrix();
 		break;
 
-		case Z:
-			//draw the z-axis arrows
-			glPushMatrix();
-				glColor3f(0, 0, 1);
-				glRotatef(90, 0, 0, 1);
-				gluCylinder(q, 0.1, 0.1, 1.5, 100, 100);
-				glTranslatef(0, 0, 1.5);
-				glutSolidCone(0.3, 0.8, 100, 100);
-			glPopMatrix();
+	case Z:
+		//draw the z-axis arrows
+		glPushMatrix();
+		glColor3f(0, 0, 1);
+		glRotatef(90, 0, 0, 1);
+		gluCylinder(q, 0.1, 0.1, 1.5, 100, 100);
+		glTranslatef(0, 0, 1.5);
+		glutSolidCone(0.3, 0.8, 100, 100);
+		glPopMatrix();
 		break;
 
 	}
@@ -210,9 +210,9 @@ void Skeleton::drawComponent(bone* root, GLUquadric* q) {
 
 	glColor3f(1, 1, 1); //color the bone white, obv.
 
-	if(selected != NULL) {
-		if(strcmp(selected->name,root->name) == 0) {
-			glColor3f(1.0f,1.0f,0.0f);
+	if (selected != NULL) {
+		if (strcmp(selected->name, root->name) == 0) {
+			glColor3f(1.0f, 1.0f, 0.0f);
 		}
 	}
 
@@ -228,11 +228,12 @@ void Skeleton::drawComponent(bone* root, GLUquadric* q) {
 	//done.
 
 	//if we have a config file provided that start slerping
-	if(amcPlayerMode) {
+	if (amcPlayerMode) {
 		int roundedFrame = (int) amcFrameFloat;
 		boneOp b = root->animationFrame[roundedFrame % frameCount];
-		boneOp c = root->animationFrame[(roundedFrame+1) % frameCount];
-		glm::quat result = glm::slerp(b.startQuat, c.startQuat, amcFrameFloat - roundedFrame);
+		boneOp c = root->animationFrame[(roundedFrame + 1) % frameCount];
+		glm::quat result = glm::slerp(b.startQuat, c.startQuat,
+				amcFrameFloat - roundedFrame);
 		glMultMatrixf(&glm::mat4_cast(result)[0][0]);
 	} else { //else we just want to update the joint rotations
 		boneOp b = root->animationFrame[amcFrame];
@@ -244,7 +245,7 @@ void Skeleton::drawComponent(bone* root, GLUquadric* q) {
 bool Skeleton::readConfig(char* filename) {
 
 	FILE* file = fopen(filename, "r");
-	if(file == NULL) {
+	if (file == NULL) {
 		printf("Failed to open config file %s\n", filename);
 		exit(EXIT_FAILURE);
 	}
@@ -253,8 +254,8 @@ bool Skeleton::readConfig(char* filename) {
 	char* temp = buff;
 	char posename[50];
 	int frameNumber;
-	while(!feof(file)) {
-		fgets(buff,buffSize,file);
+	while (!feof(file)) {
+		fgets(buff, buffSize, file);
 		temp = buff;
 		sscanf(temp, "%d %s", &frameNumber, posename);
 		readPose(frameNumber, posename);
@@ -273,9 +274,9 @@ glm::quat Skeleton::rotationDataToQuaternion(float x, float y, float z) {
 
 bool Skeleton::readPose(int framenum, char* filename) {
 
-	FILE* file = fopen(filename,"r");
-	if(file == NULL) {
-		printf("Failed to open file %s\n",filename);
+	FILE* file = fopen(filename, "r");
+	if (file == NULL) {
+		printf("Failed to open file %s\n", filename);
 		exit(EXIT_FAILURE);
 	}
 
@@ -285,23 +286,24 @@ bool Skeleton::readPose(int framenum, char* filename) {
 	char* temp = buff;
 	char name[50];
 	char transformations[200];
-	float x,y,z = 0;
-	float tx ,ty, tz = 0;
+	float x, y, z = 0;
+	float tx, ty, tz = 0;
 
-		for(int i=0; i < 29; i++) {
-			fgets(buff,buffSize,file);
-			temp = buff;
-			sscanf(temp,"%s %[^\n]", name, transformations);
-			for(int j=0; j<31; j++) {
+	for (int i = 0; i < 29; i++) {
+		fgets(buff, buffSize, file);
+		temp = buff;
+		sscanf(temp, "%s %[^\n]", name, transformations);
+		for (int j = 0; j < 31; j++) {
 
-			if(strncmp(name,root[j].name,strlen(root[j].name)) == 0) {
+			if (strncmp(name, root[j].name, strlen(root[j].name)) == 0) {
 
-				sscanf(transformations, "%f %f %f %f %f %f", &tx, &ty, &tz, &x, &y, &z);
+				sscanf(transformations, "%f %f %f %f %f %f", &tx, &ty, &tz, &x,
+						&y, &z);
 				boneOp* op = new boneOp();
 				op->tran = glm::vec3(tx, ty, tz);
 				op->startQuat = rotationDataToQuaternion(x, y, z);
 
-				if(strcmp("root",root[j].name) == 0) {
+				if (strcmp("root", root[j].name) == 0) {
 					root->animationFrame[framenum] = *op;
 					break;
 				} else {
@@ -317,7 +319,6 @@ bool Skeleton::readPose(int framenum, char* filename) {
 	printf("completed reading\n");
 	return true;
 
-
 }
 
 void Skeleton::writePoseToFile() {
@@ -329,9 +330,10 @@ void Skeleton::writePoseToFile() {
 	scanf("%s", filename);
 	FILE *fp = fopen(filename, "w");
 
-	for(std::vector<std::string>::iterator itv = v.begin(); itv != v.end(); itv++) {
-	  it = boneMap.find(itv->c_str());
-	  fprintf(fp, "%s\n", it->second.c_str());
+	for (std::vector<std::string>::iterator itv = v.begin(); itv != v.end();
+			itv++) {
+		it = boneMap.find(itv->c_str());
+		fprintf(fp, "%s\n", it->second.c_str());
 	}
 	fclose(fp);
 }
@@ -357,8 +359,8 @@ void Skeleton::readRootToMap(bone* root) {
 
 	//concat the data to make a string for printing
 	char* buffer = (char*) (malloc(sizeof(char) * 5000));
-	sprintf(buffer, "%s %f %f %f %f %f %f", result, transx, transy,
-			transz, rotx, roty, rotz); // puts string into buffer
+	sprintf(buffer, "%s %f %f %f %f %f %f", result, transx, transy, transz,
+			rotx, roty, rotz); // puts string into buffer
 	//		printf("%s\n",buffer);
 	boneMap.insert(TStrStrPair(result, buffer));
 	it = boneMap.find(result);
@@ -413,7 +415,7 @@ bone* Skeleton::findBoneByName(bone* root, char * name) {
 	if (!root) {
 		return NULL;
 	}
-	if (strcmp(root->name,name)==0) {
+	if (strcmp(root->name, name) == 0) {
 		return root;
 	}
 	for (i = 0; i < root->numChildren; i++) {

@@ -11,7 +11,6 @@
 #include "G308_Skeleton.h"
 #include "define.h"
 #include <math.h>
-#include "quaternion.h"
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
 
@@ -27,7 +26,7 @@ FileIO::FileIO(bone* rootBone) {
 }
 
 FileIO::~FileIO() {
- //do nothing really
+	//do nothing really
 }
 
 void FileIO::readHeading(char* buff, FILE* file) {
@@ -88,7 +87,8 @@ void FileIO::readHeading(char* buff, FILE* file) {
 				if (p[0] == ':') {
 					return readHeading(buff, file);
 				} else if (strcmp(p, "begin") != 0) {
-					printf("Expected begin for bone data %d, found \"%s\"", numBones, p);
+					printf("Expected begin for bone data %d, found \"%s\"",
+							numBones, p);
 					exit(EXIT_FAILURE);
 				} else {
 					readBone(buff, file);
@@ -157,7 +157,8 @@ void FileIO::readHierarchy(char* buff, FILE* file) {
 						}
 					}
 					if (other == NULL) {
-						printf("Unknown bone %s found in hierarchy. Failure", t1);
+						printf("Unknown bone %s found in hierarchy. Failure",
+								t1);
 						exit(EXIT_FAILURE);
 					}
 					rootBone->children[rootBone->numChildren] = other;
@@ -247,7 +248,8 @@ void FileIO::readBone(char* buff, FILE* file) {
 					//root[numBones].startQuat = eulerToQuat(x,y,z);
 					//root[numBones].endQuat = eulerToQuat(x,y,z);
 
-					root[numBones].animationFrame[0].startQuat = glm::quat(1, 0, 0, 0);
+					root[numBones].animationFrame[0].startQuat = glm::quat(1, 0,
+							0, 0);
 					//root[numBones].animationFrame[0].endQuat = eulerToQuat(x,y,z);
 
 					//read rotation axis
@@ -261,7 +263,8 @@ void FileIO::readBone(char* buff, FILE* file) {
 }
 
 glm::quat FileIO::rotationDataToQuaternion(float x, float y, float z) {
-	return glm::quat(glm::vec3(degreesToRad(x), degreesToRad(y), degreesToRad(z)));
+	return glm::quat(
+			glm::vec3(degreesToRad(x), degreesToRad(y), degreesToRad(z)));
 }
 
 float FileIO::degreesToRad(float rx) {
@@ -272,9 +275,9 @@ float FileIO::degreesToRad(float rx) {
 bool FileIO::readAMC(char* filename) {
 
 	//scan lines based on DOF
-	FILE* file = fopen(filename,"r");
-	if(file == NULL) {
-		printf("Failed to open file %s\n",filename);
+	FILE* file = fopen(filename, "r");
+	if (file == NULL) {
+		printf("Failed to open file %s\n", filename);
 		exit(EXIT_FAILURE);
 	}
 
@@ -282,44 +285,48 @@ bool FileIO::readAMC(char* filename) {
 
 	printf("reading motion capture file in\n");
 
-	if(fgets(buff,buffSize,file)) {
-		while(strchr(buff, '#')) {
+	if (fgets(buff, buffSize, file)) {
+		while (strchr(buff, '#')) {
 			fgets(buff, buffSize, file);
 			char* temp = buff;
 			char head[50];
 			char rest[200];
 			char name[50];
 			char transformations[200];
-			float x,y,z = 0;
-			float tx ,ty, tz = 0;
+			float x, y, z = 0;
+			float tx, ty, tz = 0;
 
 			sscanf(temp, ":%s %s", head, rest);
 
-			if(strcmp(head,"FULLY-SPECIFIED") == 0) {
+			if (strcmp(head, "FULLY-SPECIFIED") == 0) {
 //				printf("here!\n");
-				fgets(buff,buffSize,file);
+				fgets(buff, buffSize, file);
 //				printf("buffer %s: ", buff);
 
-				while(fgets(buff,buffSize, file) != NULL) {
-					sscanf(buff,"%d", &frameCount);
-					for(int i=0; i < 29; i++) {
-						fgets(buff,buffSize,file);
+				while (fgets(buff, buffSize, file) != NULL) {
+					sscanf(buff, "%d", &frameCount);
+					for (int i = 0; i < 29; i++) {
+						fgets(buff, buffSize, file);
 						temp = buff;
-						sscanf(temp,"%s %[^\n]", name, transformations);
-						for(int j=0; j<numBones; j++) {
+						sscanf(temp, "%s %[^\n]", name, transformations);
+						for (int j = 0; j < numBones; j++) {
 
-
-							if(strncmp(name,root[j].name,strlen(root[j].name)) == 0) {
-								int hasX,hasY,hasZ;
+							if (strncmp(name, root[j].name,
+									strlen(root[j].name)) == 0) {
+								int hasX, hasY, hasZ;
 								hasX = root[j].dof & DOF_RX;
 								hasY = root[j].dof & DOF_RY;
 								hasZ = root[j].dof & DOF_RZ;
 
-								if(hasX && hasY && hasZ) {
-									sscanf(transformations, "%f %f %f", &x, &y, &z);
+								if (hasX && hasY && hasZ) {
+									sscanf(transformations, "%f %f %f", &x, &y,
+											&z);
 //									printf("has x,y,z: %f %f %f\n",x,y,z);
 									boneOp* op = new boneOp();
-									op->startQuat = glm::quat(glm::vec3(degreesToRad(x), degreesToRad(y), degreesToRad(z)));
+									op->startQuat = glm::quat(
+											glm::vec3(degreesToRad(x),
+													degreesToRad(y),
+													degreesToRad(z)));
 
 //									printf("frame count: %d", frameCount);
 									root[j].animationFrame[frameCount] = *op;
@@ -328,7 +335,9 @@ bool FileIO::readAMC(char* filename) {
 									sscanf(transformations, "%f %f", &x, &y);
 //									printf("has x,y: %f %f\n",x,y);
 									boneOp* op = new boneOp();
-									op->startQuat = glm::quat(glm::vec3(degreesToRad(x), degreesToRad(y), 0));
+									op->startQuat = glm::quat(
+											glm::vec3(degreesToRad(x),
+													degreesToRad(y), 0));
 
 									root[j].animationFrame[frameCount] = *op;
 									break;
@@ -336,38 +345,45 @@ bool FileIO::readAMC(char* filename) {
 									sscanf(transformations, "%f %f", &x, &z);
 //									printf("has x,z: %f %f\n",x,z);
 									boneOp* op = new boneOp();
-									op->startQuat = glm::quat(glm::vec3(degreesToRad(x), 0, degreesToRad(z)));
+									op->startQuat = glm::quat(
+											glm::vec3(degreesToRad(x), 0,
+													degreesToRad(z)));
 									root[j].animationFrame[frameCount] = *op;
 									break;
-								} else if(hasX) {
+								} else if (hasX) {
 									sscanf(transformations, "%f", &x);
 //									printf("has x: %f\n",x);
 									boneOp* op = new boneOp();
-									op->startQuat = glm::quat(glm::vec3(degreesToRad(x),0,0));
+									op->startQuat = glm::quat(
+											glm::vec3(degreesToRad(x), 0, 0));
 
 									root[j].animationFrame[frameCount] = *op;
 									break;
-								} else if(hasY) {
+								} else if (hasY) {
 									sscanf(transformations, "%f", &y);
 //									printf("has y: %f\n",y);
 									boneOp* op = new boneOp();
-									op->startQuat = glm::quat(glm::vec3(0, degreesToRad(y), 0));
+									op->startQuat = glm::quat(
+											glm::vec3(0, degreesToRad(y), 0));
 									root[j].animationFrame[frameCount] = *op;
 									break;
-								} else if(hasZ) {
+								} else if (hasZ) {
 									sscanf(transformations, "%f", &z);
 //									printf("has z: %f\n",z);
 									boneOp* op = new boneOp();
-									op->startQuat = glm::quat(glm::vec3(0, 0, degreesToRad(z)));
+									op->startQuat = glm::quat(
+											glm::vec3(0, 0, degreesToRad(z)));
 									root[j].animationFrame[frameCount] = *op;
 									break;
-								} else if(root[j].dof == 8) {
+								} else if (root[j].dof == 8) {
 
-									sscanf(transformations, "%f %f %f %f %f %f", &tx, &ty, &tz, &x, &y, &z);
+									sscanf(transformations, "%f %f %f %f %f %f",
+											&tx, &ty, &tz, &x, &y, &z);
 
 									boneOp* op = new boneOp();
 									op->tran = glm::vec3(tx, ty, tz);
-									op->startQuat = rotationDataToQuaternion(x,y,z);
+									op->startQuat = rotationDataToQuaternion(x,
+											y, z);
 
 									root->animationFrame[frameCount] = *op;
 
@@ -478,8 +494,3 @@ DOF FileIO::dofFromString(char* s) {
 	printf("Unknown DOF found: %s", s);
 	return DOF_NONE;
 }
-
-
-
-
-
