@@ -46,6 +46,7 @@ typedef struct boneOp {
 
 	float tranx,trany,tranz;
 	float rotx,roty,rotz;
+	quaternion* startQuat, endQuat;
 
 } boneOp;
 
@@ -67,6 +68,7 @@ typedef struct bone {
 	bone* parent;
 	bone** children;
 	int numChildren;
+	quaternion* startQuat, endQuat;
 	boneOp animationFrame[20000];
 
 
