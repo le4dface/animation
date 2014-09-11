@@ -11,6 +11,9 @@
 #include "G308_Skeleton.h"
 #include "define.h"
 #include <math.h>
+#include "quaternion.h"
+#include <glm/glm.hpp>
+#include <glm/gtc/quaternion.hpp>
 
 using namespace std;
 
@@ -191,9 +194,7 @@ void FileIO::readBone(char* buff, FILE* file) {
 					//Also actually important
 					float x, y, z;
 					sscanf(p, "direction %f %f %f", &x, &y, &z);
-					root[numBones].dirx = x;
-					root[numBones].diry = y;
-					root[numBones].dirz = z;
+					root[numBones].dir = glm::vec3(x, y, z);
 					//printf("reading the bone vector: x = %f, y = %f, z = %f\n", x,y,z);
 
 				} else if (strcmp(t1, "length") == 0) {
@@ -241,9 +242,14 @@ void FileIO::readBone(char* buff, FILE* file) {
 						printf("Got: %s", p);
 						exit(EXIT_FAILURE);
 					}
-					root[numBones].rotx = x;
-					root[numBones].roty = y;
-					root[numBones].rotz = z;
+
+					//root[numBones].startQuat = glm::quat(glm::vec3(x, y, z));
+					//root[numBones].startQuat = eulerToQuat(x,y,z);
+					//root[numBones].endQuat = eulerToQuat(x,y,z);
+
+					root[numBones].animationFrame[0].startQuat = glm::quat(1, 0, 0, 0);
+					//root[numBones].animationFrame[0].endQuat = eulerToQuat(x,y,z);
+
 					//read rotation axis
 					//printf("Rotation Axis: %f, %f, %f\n", x,y,z);
 				}
@@ -252,6 +258,37 @@ void FileIO::readBone(char* buff, FILE* file) {
 
 		}
 	}
+}
+
+float FileIO::degreesToRad(float rx) {
+	rx = (M_PI * rx) / 180;
+	return rx;
+}
+
+quaternion* FileIO::eulerToQuat(float rx, float ry, float rz) {
+
+	rx = degreesToRad(rx);
+	ry = degreesToRad(ry);
+	rz = degreesToRad(rz);
+
+	float bank,heading,attitude;
+	float c1, c2, c3;
+	float s1, s2, s3;
+	float w, x, y, z;
+
+	bank = rx; heading = ry; attitude = rz;
+	c1 = cos(heading/2); c2 = cos(attitude/2); c3 = cos(bank/2);
+	s1 = sin(heading/2); s2 = sin(attitude/2); s3 = sin(bank/2);
+
+    w = sqrt(1.0 + c1 * c2 + c1*c3 - s1 * s2 * s3 + c2*c3) / 2.0;
+	float w4 = (4.0 * w);
+	x = (c2 * s3 + c1 * s3 + s1 * s2 * c3) / w4 ;
+	y = (s1 * c2 + s1 * c3 + c1 * s2 * s3) / w4 ;
+	z = (-s1 * s3 + c1 * s2 * c3 +s2) / w4 ;
+
+	quaternion* q = new quaternion(w,x,y,z);
+
+	return q;
 }
 
 
@@ -306,9 +343,8 @@ bool FileIO::readAMC(char* filename) {
 									sscanf(transformations, "%f %f %f", &x, &y, &z);
 //									printf("has x,y,z: %f %f %f\n",x,y,z);
 									boneOp* op = new boneOp();
-									op->rotx = x;
-									op->roty = y;
-									op->rotz = z;
+									op->startQuat = glm::quat(glm::vec3(degreesToRad(x), degreesToRad(y), degreesToRad(z)));
+
 //									printf("frame count: %d", frameCount);
 									root[j].animationFrame[frameCount] = *op;
 									break;
@@ -316,37 +352,37 @@ bool FileIO::readAMC(char* filename) {
 									sscanf(transformations, "%f %f", &x, &y);
 //									printf("has x,y: %f %f\n",x,y);
 									boneOp* op = new boneOp();
-									op->rotx = x;
-									op->roty = y;
+									op->startQuat = glm::quat(glm::vec3(degreesToRad(x), degreesToRad(y), 0));
+
 									root[j].animationFrame[frameCount] = *op;
 									break;
 								} else if (hasX && hasZ) {
 									sscanf(transformations, "%f %f", &x, &z);
 //									printf("has x,z: %f %f\n",x,z);
 									boneOp* op = new boneOp();
-									op->rotx = x;
-									op->rotz = z;
+									op->startQuat = glm::quat(glm::vec3(degreesToRad(x), 0, degreesToRad(z)));
 									root[j].animationFrame[frameCount] = *op;
 									break;
 								} else if(hasX) {
 									sscanf(transformations, "%f", &x);
 //									printf("has x: %f\n",x);
 									boneOp* op = new boneOp();
-									op->rotx = x;
+									op->startQuat = glm::quat(glm::vec3(degreesToRad(x),0,0));
+
 									root[j].animationFrame[frameCount] = *op;
 									break;
 								} else if(hasY) {
 									sscanf(transformations, "%f", &y);
 //									printf("has y: %f\n",y);
 									boneOp* op = new boneOp();
-									op->roty = y;
+									op->startQuat = glm::quat(glm::vec3(0, degreesToRad(y), 0));
 									root[j].animationFrame[frameCount] = *op;
 									break;
 								} else if(hasZ) {
 									sscanf(transformations, "%f", &z);
 //									printf("has z: %f\n",z);
 									boneOp* op = new boneOp();
-									op->rotz = z;
+									op->startQuat = glm::quat(glm::vec3(0, 0, degreesToRad(z)));
 									root[j].animationFrame[frameCount] = *op;
 									break;
 								} else if(root[j].dof == 8) {
@@ -354,14 +390,8 @@ bool FileIO::readAMC(char* filename) {
 									sscanf(transformations, "%f %f %f %f %f %f", &tx, &ty, &tz, &x, &y, &z);
 
 									boneOp* op = new boneOp();
-
-									op->rotx = x;
-									op->roty = y;
-									op->rotz = z;
-
-									op->tranx = tx;
-									op->trany = ty;
-									op->tranz = tz;
+									op->tran = glm::vec3(tx, ty, tz);
+									op->startQuat = glm::quat(glm::vec3(degreesToRad(x), degreesToRad(y), degreesToRad(z)));
 
 									root->animationFrame[frameCount] = *op;
 

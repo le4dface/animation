@@ -1,5 +1,4 @@
-0 sitting
-1 walker
-2 kicking
-3 walker
-4 new
+0 pose
+1 pose1
+2 pose3
+3 pose4

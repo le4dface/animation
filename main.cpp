@@ -181,14 +181,15 @@ void drawBoneText() {
 			//what joint has been selected?
 			char* result = skeleton->selected->name;
 			//the angles
-			float rotx = skeleton->selected->parent->animationFrame[skeleton->amcFrame].rotx;
-			float roty = skeleton->selected->parent->animationFrame[skeleton->amcFrame].roty;
-			float rotz = skeleton->selected->parent->animationFrame[skeleton->amcFrame].rotz;
+			glm::vec3 r = glm::eulerAngles(skeleton->selected->parent->animationFrame[skeleton->amcFrame].startQuat);
+
+			float rotx = r.x;
+			float roty = r.y;
+			float rotz = r.z;
 
 			//concat the data to make a string for printing
 			char buffer[100];
-			sprintf(buffer, "Bone: %s (rotx: %.2f, roty: %.2f, rotz: %.2f)", result,
-					rotx, roty, rotz); // puts string into buffer
+			sprintf(buffer, "Bone: %s (rotx: %.2f, roty: %.2f, rotz: %.2f)", result, rotx, roty, rotz); // puts string into buffer
 			displayText(-0.95f, 0.9f, 255, 255, 255, buffer);
 		}
 	}
@@ -327,34 +328,40 @@ void onDrag(int x, int y) {
 			if (skeleton->selected->parent != NULL) {
 				//if the mouse is generally moving in a positive direction
 				boneOp b = skeleton->selected->parent->animationFrame[skeleton->amcFrame];
+//				glm::vec3 r = glm::eulerAngles(skeleton->selected->parent->animationFrame[skeleton->amcFrame].startQuat);
+
+				float amount = 0.01;
+
 				switch (skeleton->currentAxis) {
 					case X:
-
 						if(magnitude > oldMagnitude) {
-							b.rotx += 1;
+							glm:: quat change = glm::quat(glm::vec3(amount, 0, 0));
+							b.startQuat *= change;
 						} else {
-							b.rotx -= 1;
+							glm:: quat change = glm::quat(glm::vec3(-amount, 0, 0));
+							b.startQuat *= change;
 						}
 						break;
 					case Y:
-
 						if(magnitude > oldMagnitude) {
-							b.roty += 1;
+							glm:: quat change = glm::quat(glm::vec3(0, amount, 0));
+							b.startQuat *= change;
 						} else {
-							b.roty -= 1;
+							glm:: quat change = glm::quat(glm::vec3(0, -amount, 0));
+							b.startQuat *= change;
 						}
 						break;
 					case Z:
-
 						if(magnitude > oldMagnitude) {
-							b.rotz+= 1;
+							glm:: quat change = glm::quat(glm::vec3(0, 0, amount));
+							b.startQuat *= change;
 						} else {
-							b.rotz -= 1;
+							glm:: quat change = glm::quat(glm::vec3(0, 0, -amount));
+							b.startQuat *= change;
 						}
 						break;
 					default:
 						break;
-
 				}
 
 				/*
@@ -382,7 +389,7 @@ void G308_keyboardListener(unsigned char key, int x, int y) {
 	switch (key) {
 
 		case 'o':
-
+			skeleton->amcFrameFloat += 0.05;
 			break;
 		case 'r':
 			if(!skeleton->amcPlayerMode) {

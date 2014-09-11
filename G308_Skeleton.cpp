@@ -24,6 +24,7 @@
 #include "G308_Skeleton.h"
 #include "quaternion.h"
 
+
 #include "define.h"
 
 using namespace std;
@@ -65,12 +66,8 @@ Skeleton::Skeleton() {
 		 * End colorpicker id increment
 		 */
 		root[i].numChildren = 0;
-		root[i].dirx = 0;
-		root[i].diry = 0;
-		root[i].dirz = 0;
-		root[i].rotx = 0;
-		root[i].roty = 0;
-		root[i].rotz = 0;
+		root[i].dir = glm::vec3(0, 0, 0);
+		root[i].startQuat = glm::quat(1, 0, 0, 0);
 		root[i].dof = DOF_NONE;
 		root[i].length = 0;
 		root[i].name = NULL;
@@ -168,18 +165,11 @@ void Skeleton:: rewind() {}
 void Skeleton::fastforward() {}
 
 void Skeleton::drawComponent(bone* root, GLUquadric* q) {
+
 	if (root == NULL) {
 		return;
 	}
-	quaternion* quat;
-	float quatMatrix[16];
-	quat = eulerToQuat(
-			root->rotx,
-			root->roty,
-			root->rotz
-			);
 
-	quat->toMatrix(quatMatrix);
 	//draw the joint
 	glPushMatrix();
 	//rotate the socket/joint appropriately
@@ -234,7 +224,7 @@ void Skeleton::drawComponent(bone* root, GLUquadric* q) {
 	glPushMatrix();
 
 	G308_Point v1 = { 0, 0, 1 }; //by default, bone points towards viewport
-	G308_Point v2 = { root->dirx, root->diry, root->dirz }; //bone segment vector
+	G308_Point v2 = { root->dir.x, root->dir.y, root->dir.z }; //bone segment vector
 	G308_Point normal = { 0, 0, 0 }; //initialise normal vector
 	calcCrossProduct(v1, v2, normal); //find the normal/axis of rotation for v1 and v2
 	dotProductAngle(v1, v2, angle); //calculate the angle/distance we must rotate cylinder
@@ -254,23 +244,17 @@ void Skeleton::drawComponent(bone* root, GLUquadric* q) {
 	glPopMatrix();
 
 	//now translate the correctly rotated cylinder
-	glTranslatef(root->length * root->dirx, root->length * root->diry,
-			root->length * root->dirz);
+	glTranslatef(root->length * root->dir.x, root->length * root->dir.y,
+			root->length * root->dir.z);
 	//done.
 
 	//apply colourpicking rotations
 
-	boneOp b = root->animationFrame[amcFrame];
-
-	quat = eulerToQuat(
-			b.rotx,
-			b.roty,
-			b.rotz
-			);
-
-	quat->toMatrix(quatMatrix);
-	glMultMatrixf(quatMatrix);
-
+	int roundedFrame = (int) amcFrameFloat;
+	boneOp b = root->animationFrame[roundedFrame % frameCount];
+	boneOp c = root->animationFrame[(roundedFrame+1) % frameCount];
+	glm::quat result = glm::slerp(b.startQuat, c.startQuat, amcFrameFloat - roundedFrame);
+	glMultMatrixf(&glm::mat4_cast(result)[0][0]);
 
 }
 
@@ -329,14 +313,8 @@ bool Skeleton::readPose(int framenum, char* filename) {
 					sscanf(transformations, "%f %f %f %f %f %f", &tx, &ty, &tz, &x, &y, &z);
 
 					boneOp* op = new boneOp();
-
-					op->rotx = x;
-					op->roty = y;
-					op->rotz = z;
-
-					op->tranx = tx;
-					op->trany = ty;
-					op->tranz = tz;
+					op->tran = glm::vec3(tx, ty, tz);
+					op->startQuat = glm::quat(glm::vec3(degreesToRad(x), degreesToRad(y), degreesToRad(z)));
 
 					root->animationFrame[framenum] = *op;
 
@@ -347,14 +325,9 @@ bool Skeleton::readPose(int framenum, char* filename) {
 					sscanf(transformations, "%f %f %f %f %f %f", &tx, &ty, &tz, &x, &y, &z);
 
 					boneOp* op = new boneOp();
+					op->tran = glm::vec3(tx, ty, tz);
+					op->startQuat = glm::quat(glm::vec3(degreesToRad(x), degreesToRad(y), degreesToRad(z)));
 
-					op->rotx = x;
-					op->roty = y;
-					op->rotz = z;
-
-					op->tranx = tx;
-					op->trany = ty;
-					op->tranz = tz;
 					//TODO was this a problem?
 					root[j].animationFrame[framenum] = *op;
 
@@ -399,12 +372,14 @@ bone* Skeleton::traverseHierachy() {
 void Skeleton::readRootToMap(bone* root) {
 	char* result = root->name;
 	//the angles
-	float rotx = root->animationFrame[amcFrame].rotx;
-	float roty = root->animationFrame[amcFrame].roty;
-	float rotz = root->animationFrame[amcFrame].rotz;
-	float transx = root->animationFrame[amcFrame].tranx;
-	float transy = root->animationFrame[amcFrame].trany;
-	float transz = root->animationFrame[amcFrame].tranz;
+	glm::vec3 r = glm::eulerAngles(root->animationFrame[amcFrame].startQuat);
+	float rotx = r.x;
+	float roty = r.y;
+	float rotz = r.z;
+	float transx = root->animationFrame[amcFrame].tran.x;
+	float transy = root->animationFrame[amcFrame].tran.y;
+	float transz = root->animationFrame[amcFrame].tran.z;
+
 	//concat the data to make a string for printing
 	char* buffer = (char*) (malloc(sizeof(char) * 5000));
 	sprintf(buffer, "%s %f %f %f %f %f %f", result, transx, transy,
@@ -419,9 +394,11 @@ void Skeleton::readRootToMap(bone* root) {
 void Skeleton::readBoneToMap(bone* root) {
 	char* result = root->name;
 	//the angles
-	float rotx = root->animationFrame[amcFrame].rotx;
-	float roty = root->animationFrame[amcFrame].roty;
-	float rotz = root->animationFrame[amcFrame].rotz;
+	glm::vec3 r = glm::eulerAngles(root->animationFrame[amcFrame].startQuat);
+	float rotx = r.x;
+	float roty = r.y;
+	float rotz = r.z;
+
 	//concat the data to make a string for printing
 	char* buffer = (char*) (malloc(sizeof(char) * 5000));
 	sprintf(buffer, "%s %f %f %f", result, rotx, roty, rotz); // puts string into buffer
