@@ -299,7 +299,6 @@ bool Skeleton::readConfig(char* filename) {
 
 }
 
-
 bool Skeleton::readPose(int framenum, char* filename) {
 
 	FILE* file = fopen(filename,"r");
@@ -323,46 +322,44 @@ bool Skeleton::readPose(int framenum, char* filename) {
 			sscanf(temp,"%s %[^\n]", name, transformations);
 			for(int j=0; j<31; j++) {
 
-				if(strncmp(name,root[j].name,strlen(root[j].name)) == 0) {
+			if(strncmp(name,root[j].name,strlen(root[j].name)) == 0) {
 
-					if(strcmp("root",root[j].name) == 0) {
+				if(strcmp("root",root[j].name) == 0) {
 
-						sscanf(transformations, "%f %f %f %f %f %f", &tx, &ty, &tz, &x, &y, &z);
+					sscanf(transformations, "%f %f %f %f %f %f", &tx, &ty, &tz, &x, &y, &z);
 
-						boneOp* op = new boneOp();
+					boneOp* op = new boneOp();
 
-						op->rotx = x;
-						op->roty = y;
-						op->rotz = z;
+					op->rotx = x;
+					op->roty = y;
+					op->rotz = z;
 
-						op->tranx = tx;
-						op->trany = ty;
-						op->tranz = tz;
+					op->tranx = tx;
+					op->trany = ty;
+					op->tranz = tz;
 
-						root->animationFrame[framenum] = *op;
+					root->animationFrame[framenum] = *op;
 
-						break;
+					break;
 
-					} else {
+				} else {
 
-						sscanf(transformations, "%f %f %f %f %f %f", &tx, &ty, &tz, &x, &y, &z);
+					sscanf(transformations, "%f %f %f %f %f %f", &tx, &ty, &tz, &x, &y, &z);
 
-						boneOp* op = new boneOp();
+					boneOp* op = new boneOp();
 
-						op->rotx = x;
-						op->roty = y;
-						op->rotz = z;
+					op->rotx = x;
+					op->roty = y;
+					op->rotz = z;
 
-						op->tranx = tx;
-						op->trany = ty;
-						op->tranz = tz;
-						//TODO was this a problem?
-						root[j].animationFrame[framenum] = *op;
+					op->tranx = tx;
+					op->trany = ty;
+					op->tranz = tz;
+					//TODO was this a problem?
+					root[j].animationFrame[framenum] = *op;
 
-						break;
-					}
-
-
+					break;
+				}
 			}
 		}
 	}
