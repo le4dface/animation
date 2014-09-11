@@ -29,6 +29,7 @@
 using namespace std;
 
 Skeleton::Skeleton() {
+
 	numBones = 1;
 	//color ids for picking; increment after each drawing
 	gColorId.r = 0;
@@ -179,60 +180,54 @@ void Skeleton::drawComponent(bone* root, GLUquadric* q) {
 			);
 
 	quat->toMatrix(quatMatrix);
-
 	//draw the joint
 	glPushMatrix();
 	//rotate the socket/joint appropriately
-
 	glColor3f(root->id.r / 255.0f, root->id.g / 255.0f, root->id.b / 255.0f);
-
 	if(selected != NULL) {
 		if(strcmp(selected->name,root->name) == 0) {
 			glColor3f(1.0f,0.0f,1.0f);
 		}
 	}
-
 	glutSolidSphere(1.0, 50, 50);
-
 	glPopMatrix();
+	//only render the axis that is currently being rotated about
+	switch(currentAxis) {
 
-		//only render the axis that is currently being rotated about
-		switch(currentAxis) {
+		case Y:
+			//draw the y-axis arrows
+			glPushMatrix();
+				glColor3f(1.0, 0.5, 0.0);
+				glRotatef(-90, 1, 0, 0);
+				gluCylinder(q, 0.1, 0.1, 1.5, 100, 100);
+				glTranslatef(0, 0, 1.5);
+				glutSolidCone(0.3, 0.8, 100, 100);
+			glPopMatrix();
+		break;
 
-			case Y:
-				//draw the y-axis arrows
-				glPushMatrix();
-					glColor3f(1.0, 0.5, 0.0);
-					glRotatef(-90, 1, 0, 0);
-					gluCylinder(q, 0.1, 0.1, 1.5, 100, 100);
-					glTranslatef(0, 0, 1.5);
-					glutSolidCone(0.3, 0.8, 100, 100);
-				glPopMatrix();
-			break;
+		case X:
+			//draw the x-axis arrows
+			glPushMatrix();
+				glColor3f(1, 0, 0);
+				glRotatef(90, 0, 1, 0);
+				gluCylinder(q, 0.1, 0.1, 1.5, 100, 100);
+				glTranslatef(0, 0, 1.5);
+				glutSolidCone(0.3, 0.8, 100, 100);
+			glPopMatrix();
+		break;
 
-			case X:
-				//draw the x-axis arrows
-				glPushMatrix();
-					glColor3f(1, 0, 0);
-					glRotatef(90, 0, 1, 0);
-					gluCylinder(q, 0.1, 0.1, 1.5, 100, 100);
-					glTranslatef(0, 0, 1.5);
-					glutSolidCone(0.3, 0.8, 100, 100);
-				glPopMatrix();
-			break;
+		case Z:
+			//draw the z-axis arrows
+			glPushMatrix();
+				glColor3f(0, 0, 1);
+				glRotatef(90, 0, 0, 1);
+				gluCylinder(q, 0.1, 0.1, 1.5, 100, 100);
+				glTranslatef(0, 0, 1.5);
+				glutSolidCone(0.3, 0.8, 100, 100);
+			glPopMatrix();
+		break;
 
-			case Z:
-				//draw the z-axis arrows
-				glPushMatrix();
-					glColor3f(0, 0, 1);
-					glRotatef(90, 0, 0, 1);
-					gluCylinder(q, 0.1, 0.1, 1.5, 100, 100);
-					glTranslatef(0, 0, 1.5);
-					glutSolidCone(0.3, 0.8, 100, 100);
-				glPopMatrix();
-			break;
-
-		}
+	}
 
 	GLfloat angle = 0.0;
 
