@@ -74,17 +74,7 @@ Skeleton::Skeleton() {
 		root[i].length = 0;
 		root[i].name = NULL;
 		root[i].children = (bone**) malloc(sizeof(bone*) * 5);
-
-		//Challenge stuff
-		root[i].currentTranslatex = 0;
-		root[i].currentTranslatey = 0;
-		root[i].currentTranslatez = 0;
-		root[i].currentRotationx = 0;
-		root[i].currentRotationy = 0;
-		root[i].currentRotationz = 0;
-
 	}
-
 	char*name = (char*) malloc(sizeof(char) * 5);
 	name[0] = 'r';
 	name[1] = name[2] = 'o';
@@ -92,7 +82,6 @@ Skeleton::Skeleton() {
 	name[4] = '\0';
 	root[0].name = name;
 	root[0].dof = DOF_ROOT;
-
 }
 
 Skeleton::~Skeleton() {
@@ -117,18 +106,12 @@ void Skeleton::deleteBones(bone* root) {
 // [Assignment2] you may need to revise this function
 
 void Skeleton::display() {
-
 	if (root == NULL) {
 		return;
 	}
-
 	gColorId = {0, 220, 220};
-
 	glMatrixMode(GL_MODELVIEW);
-
 	glPushMatrix();
-//	glScalef(0.1, 0.1, 0.1);
-
     // Begin drawing the floor
 	   	unsigned int GridSizeX = 64;
 		unsigned int GridSizeZ = 64;
@@ -136,9 +119,7 @@ void Skeleton::display() {
 		unsigned int SizeZ = 8;
 
 		if(amcPlayerMode) {
-
 		glPushMatrix();
-
 			glTranslatef(-64*4,0,-64*4);
 			glBegin(GL_QUADS);
 			for (unsigned int x=0;x<GridSizeX;++x)
@@ -154,13 +135,9 @@ void Skeleton::display() {
 					glVertex3f((x+1)*SizeX,0,(z+1)*SizeZ);
 					glVertex3f(    x*SizeX,0,(z+1)*SizeZ);
 				}
-
 			glEnd();
-
 		glPopMatrix();
 		}
-
-
 	GLUquadric* quad = gluNewQuadric(); //Create a new quadric to allow you to draw cylinders
 	if (quad == 0) {
 		printf("Not enough memory to allocate space to draw\n");
@@ -168,11 +145,8 @@ void Skeleton::display() {
 	}
 	//Actually draw the skeleton
 	display(root, quad);
-
 	glPopMatrix();
-
 	gluDeleteQuadric(quad);
-
 }
 
 void Skeleton::play() {
@@ -180,68 +154,22 @@ void Skeleton::play() {
 	// Move AMC animation one frame forward.
 	amcFrame++;
 
-	if (amcFrame > frameCount) {
+	if (amcFrame >= frameCount) {
 		amcFrame = 0;
 	}
 
 }
 void Skeleton::pause() {}
 void Skeleton::stop() {
-
 	amcFrame = 0;
-
 }
-void Skeleton:: rewind() {
-
-	// Move AMC animation one frame forward.
-	amcFrame-=4;
-
-	if (amcFrame < 1) {
-		amcFrame = 0;
-	}
-
-}
-void Skeleton::fastforward() {
-
-	// Move AMC animation one frame forward.
-	amcFrame+=4;
-
-	if (amcFrame > frameCount) {
-		amcFrame = 0;
-	}
-}
-
-
-void Skeleton::animationRotation(bone* bone) {
-
-	boneOp b = bone->animationFrame[amcFrame];
-
-
-	if(bone->dof == 8) {
-//		printf("is it a root? %s", bone->name);
-		cameraRotation.x = b.rotx;
-		cameraRotation.y = b.roty;
-		cameraRotation.z = b.rotz;
-		cameraTranslation.x = b.tranx;
-		cameraTranslation.y = b.trany;
-		cameraTranslation.z = b.tranz;
-		glTranslatef(b.tranx, b.trany, b.tranz);
-	}
-
-
-	glRotatef(b.rotz, 0.0, 0.0, 1.0);
-	glRotatef(b.roty, 0.0, 1.0, 0.0);
-	glRotatef(b.rotx, 1.0, 0.0, 0.0);
-
-}
-
+void Skeleton:: rewind() {}
+void Skeleton::fastforward() {}
 
 void Skeleton::drawComponent(bone* root, GLUquadric* q) {
-
 	if (root == NULL) {
 		return;
 	}
-
 	quaternion* quat;
 	float quatMatrix[16];
 	quat = eulerToQuat(
@@ -360,29 +288,19 @@ bool Skeleton::readConfig(char* filename) {
 	}
 
 	char* buff = new char[buffSize];
-	printf("reading pose file in\n");
-
 	char* temp = buff;
-
 	char posename[50];
 	int frameNumber;
-
-	string delim = " ";
-
 	while(!feof(file)) {
 		fgets(buff,buffSize,file);
 		temp = buff;
 		sscanf(temp, "%d %s", &frameNumber, posename);
-//		printf("frame number:%i\nfilename: %s\n", frameNumber, posename);
 		readPose(frameNumber, posename);
 	}
-
 	delete[] buff;
 	fclose(file);
 	printf("completed reading\n");
 	return true;
-
-
 
 }
 
@@ -396,8 +314,6 @@ bool Skeleton::readPose(int framenum, char* filename) {
 	}
 
 	char* buff = new char[buffSize];
-
-
 	printf("reading pose file in\n");
 
 	char* temp = buff;
@@ -409,10 +325,7 @@ bool Skeleton::readPose(int framenum, char* filename) {
 		for(int i=0; i < 29; i++) {
 			fgets(buff,buffSize,file);
 			temp = buff;
-//			printf("tempee: %s\n", temp);
 			sscanf(temp,"%s %[^\n]", name, transformations);
-//					printf("temp: %s\n", temp);
-
 			for(int j=0; j<31; j++) {
 
 				if(strncmp(name,root[j].name,strlen(root[j].name)) == 0) {
@@ -433,14 +346,6 @@ bool Skeleton::readPose(int framenum, char* filename) {
 
 						root->animationFrame[framenum] = *op;
 
-						root->currentRotationx = x;
-						root->currentRotationy = y;
-						root->currentRotationz = z;
-
-						root->currentTranslatex = tx;
-						root->currentTranslatey = ty;
-						root->currentTranslatez = tz;
-
 						break;
 
 					} else {
@@ -459,10 +364,6 @@ bool Skeleton::readPose(int framenum, char* filename) {
 						//TODO was this a problem?
 						root[j].animationFrame[framenum] = *op;
 
-						root[j].currentRotationx = x;
-						root[j].currentRotationy = y;
-						root[j].currentRotationz = z;
-
 						break;
 					}
 
@@ -470,8 +371,6 @@ bool Skeleton::readPose(int framenum, char* filename) {
 			}
 		}
 	}
-
-
 	frameCount++;
 	delete[] buff;
 	fclose(file);
@@ -482,7 +381,6 @@ bool Skeleton::readPose(int framenum, char* filename) {
 }
 
 void Skeleton::writePoseToFile() {
-
 	vector<string> v;
 	v.insert(v.end(), boneNames, boneNames + 29);
 
@@ -495,32 +393,26 @@ void Skeleton::writePoseToFile() {
 	  it = boneMap.find(itv->c_str());
 	  fprintf(fp, "%s\n", it->second.c_str());
 	}
-
 	fclose(fp);
-
 }
 
 bone* Skeleton::traverseHierachy() {
-
 	if (root == NULL) {
 		//do nothing
 		return NULL;
 	}
-
 	return traverseHierachy(root);
-
 }
 
 void Skeleton::readRootToMap(bone* root) {
-
 	char* result = root->name;
 	//the angles
-	float rotx = root->currentRotationx;
-	float roty = root->currentRotationy;
-	float rotz = root->currentRotationz;
-	float transx = root->currentTranslatex;
-	float transy = root->currentTranslatey;
-	float transz = root->currentTranslatez;
+	float rotx = root->animationFrame[amcFrame].rotx;
+	float roty = root->animationFrame[amcFrame].roty;
+	float rotz = root->animationFrame[amcFrame].rotz;
+	float transx = root->animationFrame[amcFrame].tranx;
+	float transy = root->animationFrame[amcFrame].trany;
+	float transz = root->animationFrame[amcFrame].tranz;
 	//concat the data to make a string for printing
 	char* buffer = (char*) (malloc(sizeof(char) * 5000));
 	sprintf(buffer, "%s %f %f %f %f %f %f", result, transx, transy,
@@ -533,12 +425,11 @@ void Skeleton::readRootToMap(bone* root) {
 }
 
 void Skeleton::readBoneToMap(bone* root) {
-
 	char* result = root->name;
 	//the angles
-	float rotx = root->currentRotationx + root->rotx;
-	float roty = root->currentRotationy + root->roty;
-	float rotz = root->currentRotationz + root->rotz;
+	float rotx = root->animationFrame[amcFrame].rotx;
+	float roty = root->animationFrame[amcFrame].roty;
+	float rotz = root->animationFrame[amcFrame].rotz;
 	//concat the data to make a string for printing
 	char* buffer = (char*) (malloc(sizeof(char) * 5000));
 	sprintf(buffer, "%s %f %f %f", result, rotx, roty, rotz); // puts string into buffer
@@ -546,117 +437,76 @@ void Skeleton::readBoneToMap(bone* root) {
 	boneMap.insert(TStrStrPair(result, buffer));
 	it = boneMap.find(result);
 	printf("HELLO %s %s\n", it->first.c_str(), it->second.c_str());
-
 }
 
 bone* Skeleton::traverseHierachy(bone* root) {
-
 	int i;
 	bone *p;
-
 	if (!root) {
 		return NULL;
 	}
-
 	readRootToMap(root);
-
 	for (i = 0; i < root->numChildren; i++) {
-
 		p = traverseHierachy(root->children[i]);
-
 		if (p) {
 			return p;
 		}
-
 	}
-
 	return NULL;
-
 }
 
 bone* Skeleton::findBoneByName(char * name) {
-
 	if (root == NULL) {
 		//do nothing
 		return NULL;
 	}
 	return findBoneByName(root, name);
-
 }
 
 bone* Skeleton::findBoneByName(bone* root, char * name) {
-
 	int i;
 	bone *p;
-
 	if (!root) {
-//		printf("not root");
 		return NULL;
 	}
-
 	if (strcmp(root->name,name)==0) {
-
 		return root;
 	}
-
 	for (i = 0; i < root->numChildren; i++) {
-
 		p = findBoneByName(root->children[i], name);
-
 		if (p) {
 			return p;
 		}
-
 	}
-
 	return NULL;
-
 }
 
-
 bone* Skeleton::findBoneById(unsigned char * pixel) {
-
 	if (root == NULL) {
-		//do nothing
 		return NULL;
 	}
 	return findBoneById(root, pixel);
-
 }
 
 bone* Skeleton::findBoneById(bone* root, unsigned char * pixel) {
-
 	int i;
 	bone *p;
-
 	if (!root) {
-//		printf("not root");
 		return NULL;
 	}
-
 	if ((root->id.r) == (pixel[0]) && (root->id.g) == (pixel[1])
 			&& (root->id.b) == (pixel[2])) {
-
 //		printf("id: %s", root->name);
 		return root;
 	}
-
 	for (i = 0; i < root->numChildren; i++) {
-
 		p = findBoneById(root->children[i], pixel);
-
 		if (p) {
 			return p;
 		}
-
 	}
-
 	return NULL;
-
 }
-
-
-
 
 // [Assignment2] you need to fill this function
 // CORE: MODIFY TO DISPLAY PRIMAN.ASF; READ INTO ARRAY; DRAW WHOLE SKELETON
@@ -664,23 +514,15 @@ void Skeleton::display(bone* root, GLUquadric* q) {
 	if (root == NULL) {
 		return;
 	}
-
-//	printf("number of children bones: %d\n", root->numChildren);
 	glPushMatrix();
-
 	drawComponent(root, q);
 	int i;
 	for (i = 0; i < root->numChildren; i++) {
 		root->children[i]->parent = root;
 		display(root->children[i], q);
-
 	}
-
 	glPopMatrix();
-
 }
-
-
 
 void Skeleton::findUV(const G308_Point& v2, const G308_Point& v1,
 		const G308_Point& v3, G308_Point& u, G308_Point& v) {
@@ -743,13 +585,11 @@ quaternion* Skeleton::eulerToQuat(float rx, float ry, float rz) {
 	quaternion* q = new quaternion(w,x,y,z);
 
 	return q;
-
 }
 
 
 void Skeleton::dotProductAngle(const G308_Point& v1, const G308_Point& v2,
 		float& temp) {
-
 	//v1 · v2 = |v1| × |v2| × cos(θ)
 	float dotProdV1V2, magV1, magV2, productMag;
 	//calculate dot product of v1 and v2

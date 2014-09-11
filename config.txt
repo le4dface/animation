@@ -2,4 +2,4 @@
 1 walker
 2 kicking
 3 walker
-4 sitting
+4 new

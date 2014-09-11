@@ -181,12 +181,9 @@ void drawBoneText() {
 			//what joint has been selected?
 			char* result = skeleton->selected->name;
 			//the angles
-			float rotx = skeleton->selected->parent->currentRotationx +
-					skeleton->selected->parent->rotx;
-			float roty = skeleton->selected->parent->currentRotationy +
-					skeleton->selected->parent->roty;
-			float rotz = skeleton->selected->parent->currentRotationz +
-					skeleton->selected->parent->rotz;
+			float rotx = skeleton->selected->parent->animationFrame[skeleton->amcFrame].rotx;
+			float roty = skeleton->selected->parent->animationFrame[skeleton->amcFrame].roty;
+			float rotz = skeleton->selected->parent->animationFrame[skeleton->amcFrame].rotz;
 
 			//concat the data to make a string for printing
 			char buffer[100];
@@ -338,9 +335,6 @@ void onDrag(int x, int y) {
 						} else {
 							b.rotx -= 1;
 						}
-						printf("joint: %s, rotX: %f\n",
-								skeleton->selected->name,
-								skeleton->selected->parent->currentRotationx);
 						break;
 					case Y:
 
@@ -349,10 +343,6 @@ void onDrag(int x, int y) {
 						} else {
 							b.roty -= 1;
 						}
-
-						printf("joint: %s, rotY: %f\n",
-								skeleton->selected->name,
-								skeleton->selected->parent->currentRotationy);
 						break;
 					case Z:
 
@@ -361,9 +351,6 @@ void onDrag(int x, int y) {
 						} else {
 							b.rotz -= 1;
 						}
-						printf("joint: %s, rotZ: %f\n",
-								skeleton->selected->name,
-								skeleton->selected->parent->currentRotationz);
 						break;
 					default:
 						break;

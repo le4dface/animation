@@ -69,9 +69,6 @@ typedef struct bone {
 	int numChildren;
 	boneOp animationFrame[20000];
 
-	//Challenge stuff
-	float currentTranslatex, currentTranslatey, currentTranslatez;
-	float currentRotationx, currentRotationy, currentRotationz;
 
 } bone;
 
