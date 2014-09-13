@@ -42,9 +42,11 @@ bool playing = false;
 bool firstClick = true;
 static int menu_id;
 char* selected_name[100];
-int right_button_state = 0; //is right button down?
-int shift_right_button_state = 0;
-int shift_left_button_state = 0;
+//int right_button_state = 0; //is right button down?
+//int shift_right_button_state = 0;
+//int shift_left_button_state = 0;
+
+bool ROTATING, PANNING;
 
 float oldX, oldY; //old mouse x and y position
 float oldMagnitude; //old mouse motion magnitude
@@ -308,56 +310,39 @@ void pickByColor(int x, int y) {
 
 // On mouse click call back, used for selected bones
 void onMouse(int button, int state, int x, int y) {
-
-	int mod;
-	if(button == 3) { //wheel up
-		zoom *= 1.1;
-	} else if(button == 4) { //wheel down
-		zoom *= 0.9;
-	} else if(button == GLUT_LEFT_BUTTON) {
-		if (state != GLUT_DOWN) {
-			return;
-		}
-		//check that ctrl has been pressed to select joint
-	    mod = glutGetModifiers();
-	    if (mod == (GLUT_ACTIVE_CTRL)) {
-	    	//turn off texturing, lighting and fog
-			pickByColor(x, y);
-	    }
-	    shift_right_button_state = 0;
-	    right_button_state = 0;
+	//reset
+	if (state) {
+		ROTATING = PANNING = false;
 	}
-
-
-		if(button == GLUT_RIGHT_BUTTON) {
-
-			if((glutGetModifiers() & GLUT_ACTIVE_SHIFT) == GLUT_ACTIVE_SHIFT) {
-				shift_right_button_state = 1;
-				shift_left_button_state = 0;
-				getArc( arcball_x, arcball_y, x, y, arcball_radius, click_new ); // initial click down
-				click_old = click_new;
-				firstClick = false;
-			} else {
-				shift_right_button_state = 0;
-				right_button_state = 1;
-				firstClick = true;
-			}
-
-		} else if(button == GLUT_LEFT_BUTTON) {
-
-			if((glutGetModifiers() & GLUT_ACTIVE_SHIFT) == GLUT_ACTIVE_SHIFT) {
-				shift_left_button_state = 1;
-				shift_right_button_state = 0;
-				click_x = x;
-				click_y = y;
-			} else {
-				shift_left_button_state = 0;
-				right_button_state = 0;
-				firstClick = true;
-			}
-
+	//if shift is being held down
+	if((glutGetModifiers() & GLUT_ACTIVE_SHIFT) == GLUT_ACTIVE_SHIFT) {
+		//rotating
+		if(button == 0) {
+			ROTATING = true;
+			getArc( arcball_x, arcball_y, x, y, arcball_radius, click_new ); // initial click down
+			click_old = click_new;
+			firstClick = false;
+		//panning
+		} else if(button == 2) {
+			PANNING = true;
+			click_x = x;
+			click_y = y;
+			firstClick = false;
+		//zoom
+		} else if(button == 3) {
+			zoom*=1.1;
+		} else if(button == 4) {
+			zoom*=0.9;
 		}
+		//check off that we have acquired coordinates from first click
 
+	//if control is pressed down
+	} else if((glutGetModifiers() & GLUT_ACTIVE_CTRL) == GLUT_ACTIVE_CTRL) {
+	//turn off texturing, lighting and fog
+		if(button == 0) {
+			pickByColor(x, y);
+		}
+	}
 
 }
 
@@ -365,7 +350,6 @@ void onMouse(int button, int state, int x, int y) {
 void resize(int x, int y) {
 	g_nWinWidth = x;
 	g_nWinHeight = y;
-//	cam_aspect = (double) x / (double) y;
 	arcball_x = (x / 2.0);
 	arcball_y = (y / 2.0);
 	arcball_radius = (x / 2.0);
@@ -410,7 +394,6 @@ void rotateOnDrag(int x, int y) {
 	//what we really want is the magnitude of the mouse movement
 	//previously was check for oldX vs newX
 	float magnitude = sqrt(x * x + y * y);
-	if (right_button_state == 1) {
 		/*
 		 * Welcome to terrible C++ programming with reuben!
 		 */
@@ -420,7 +403,7 @@ void rotateOnDrag(int x, int y) {
 				boneRotationCtrl(magnitude);
 			}
 		}
-	}
+
 	oldX = x;
 	oldY = y;
 	//set the reference magnitude for next call of this function
@@ -447,18 +430,16 @@ void getArc(int arcx, int arcy, int ix, int iy, float rad, glm::quat &result) {
 
 //On mouse motion callback, used for rotating selected joints
 void onDrag(int x, int y) {
-
-	if (shift_right_button_state == 1) {
-		printf("x: %d, y: %d\n", x, y);
+	//on shift and left click
+	if(ROTATING) {
 		getArc(arcball_x, arcball_y, x, y, arcball_radius, click_new);
 		glm::quat q = cam_angle_d = click_new * glm::inverse(click_old);
 		cam_angle_d = q * cam_angle_d;
 		click_old = click_new;
-
-	} else if(shift_left_button_state == 1) {
-
+	} else if(PANNING) {
+    //on shift and right click
 		float xn = click_x - x;
-		float yn = click_y - y;
+		float yn = -1*(click_y - y);
 		float len_sq = xn*xn + yn*yn;
 		if (len_sq > 0.1) {
 			float len = sqrt(len_sq);
@@ -467,10 +448,11 @@ void onDrag(int x, int y) {
 			click_x = x;
 			click_y = y;
 		}
-
 	} else {
+		//if bone selected and right mouse
 		rotateOnDrag(x, y);
 	}
+
 }
 
 void changeRotAxis() {
