@@ -25,22 +25,26 @@
 #include "define.h"
 #include "FileIO.h"
 #include "G308_Skeleton.h"
+#include <glm/glm.hpp>
+#include <glm/gtc/quaternion.hpp>
+#include <glm/gtx/euler_angles.hpp>
 
 //menu options for amc player
 enum MENU_ENUM {
 	PLAY, PAUSE, STOP, REWIND, FAST_FORWARD
 };
 
-
-
 MENU_ENUM selected_mode = PAUSE;
 
 char* filename;
 
 bool playing = false;
+bool firstClick = true;
 static int menu_id;
 char* selected_name[100];
 int right_button_state = 0; //is right button down?
+int shift_right_button_state = 0;
+int shift_left_button_state = 0;
 
 float oldX, oldY; //old mouse x and y position
 float oldMagnitude; //old mouse motion magnitude
@@ -53,14 +57,29 @@ float zoom = 100;
 
 float yRot = 0;
 float xRot = 0;
+float zRot = 0;
 
 float lightX = 200;
 float lightY = 200;
 float lightZ = 200;
 
-int arcball_on = false;
+//arcball
+glm::quat cam_angle{1, 0, 0, 0};
+glm::quat cam_angle_d{1, 0, 0, 0};
+glm::quat click_old{1, 0, 0, 0};
+glm::quat click_new{1, 0, 0, 0};
 
-G308_Point cameraPosition = {0.0,10.0,20.0};
+glm::vec3 focus;
+
+// mouse action settings
+float arcball_x = 0.0;
+float arcball_y = 0.0;
+float arcball_radius = 2.0;
+float click_x = 0.0;
+float click_y = 0.0;
+
+
+glm::vec3 cameraPosition = {0.0,10.0,20.0};
 
 void G308_keyboardListener(unsigned char, int, int);
 void G308_Reshape(int w, int h);
@@ -81,9 +100,16 @@ void onDrag(int x, int y);
 void savePose();
 void readPose(int framenum, char* filename);
 
+//arc
+
+void getArc(int, int, int, int, float, glm::quat &);
+void getUnitCircle(int, int, int, int, glm::quat &);
+
 Skeleton* skeleton = NULL;
 Skeleton* skeletonDefault = NULL;
 FileIO* fileInput = NULL;
+
+
 
 int main(int argc, char** argv) {
 	if (argc < 2) {
@@ -126,7 +152,6 @@ int main(int argc, char** argv) {
 
 	return EXIT_SUCCESS;
 }
-
 
 void savePose() {
 	skeleton->traverseHierachy();
@@ -261,6 +286,25 @@ void G308_display() {
 	G308_SetLight();
 }
 
+void pickByColor(int x, int y) {
+	//turn off texturing, lighting and fog
+	glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+	glDisable(GL_LIGHT0);
+	if (skeleton->amcPlayerMode == false) {
+		unsigned char pixel[3];
+		skeleton->display();
+		glEnable(GL_SCISSOR_TEST);
+		glScissor(x, y, 1, 1);
+		glReadPixels(x, g_nWinHeight - y, 1, 1, GL_RGB, GL_UNSIGNED_BYTE,
+				pixel);
+		glEnable(GL_LIGHT0);
+		glDisable(GL_SCISSOR_TEST);
+		//currently selected bone
+		if (skeleton->findBoneById(pixel) != NULL) {
+			skeleton->selected = skeleton->findBoneById(pixel);
+		}
+	}
+}
 
 // On mouse click call back, used for selected bones
 void onMouse(int button, int state, int x, int y) {
@@ -271,42 +315,62 @@ void onMouse(int button, int state, int x, int y) {
 	} else if(button == 4) { //wheel down
 		zoom *= 0.9;
 	} else if(button == GLUT_LEFT_BUTTON) {
-
 		if (state != GLUT_DOWN) {
 			return;
 		}
-
 		//check that ctrl has been pressed to select joint
 	    mod = glutGetModifiers();
 	    if (mod == (GLUT_ACTIVE_CTRL)) {
-
 	    	//turn off texturing, lighting and fog
-			glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-			glDisable(GL_LIGHT0);
-
-			if(skeleton->amcPlayerMode == false) {
-				unsigned char pixel[3];
-				skeleton->display();
-				glEnable(GL_SCISSOR_TEST);
-					glScissor(x, y, 1, 1);
-					glReadPixels(x, g_nWinHeight - y, 1, 1, GL_RGB, GL_UNSIGNED_BYTE,pixel);
-					glEnable(GL_LIGHT0);
-				glDisable(GL_SCISSOR_TEST);
-				//currently selected bone
-				if (skeleton->findBoneById(pixel) != NULL) {
-					skeleton->selected = skeleton->findBoneById(pixel);
-				}
-			}
+			pickByColor(x, y);
 	    }
+	    shift_right_button_state = 0;
+	    right_button_state = 0;
 	}
 
-	if(button == GLUT_RIGHT_BUTTON) {
-		right_button_state = 1;
-	} else {
-		right_button_state = 0;
-	}
+
+		if(button == GLUT_RIGHT_BUTTON) {
+
+			if((glutGetModifiers() & GLUT_ACTIVE_SHIFT) == GLUT_ACTIVE_SHIFT) {
+				shift_right_button_state = 1;
+				shift_left_button_state = 0;
+				getArc( arcball_x, arcball_y, x, y, arcball_radius, click_new ); // initial click down
+				click_old = click_new;
+				firstClick = false;
+			} else {
+				shift_right_button_state = 0;
+				right_button_state = 1;
+				firstClick = true;
+			}
+
+		} else if(button == GLUT_LEFT_BUTTON) {
+
+			if((glutGetModifiers() & GLUT_ACTIVE_SHIFT) == GLUT_ACTIVE_SHIFT) {
+				shift_left_button_state = 1;
+				shift_right_button_state = 0;
+				click_x = x;
+				click_y = y;
+			} else {
+				shift_left_button_state = 0;
+				right_button_state = 0;
+				firstClick = true;
+			}
+
+		}
+
 
 }
+
+
+void resize(int x, int y) {
+	g_nWinWidth = x;
+	g_nWinHeight = y;
+//	cam_aspect = (double) x / (double) y;
+	arcball_x = (x / 2.0);
+	arcball_y = (y / 2.0);
+	arcball_radius = (x / 2.0);
+}
+
 
 void rotateBone(float magnitude, float xamount,float yamount, float zamount, boneOp& b) {
 	if (magnitude > oldMagnitude) {
@@ -322,46 +386,109 @@ boneOp getTargetBone() {
 	return skeleton->selected->parent->animationFrame[skeleton->amcFrame];
 }
 
-//On mouse motion callback, used for rotating selected joints
-void onDrag(int x, int y) {
+void boneRotationCtrl(float magnitude) {
+	//if the mouse is generally moving in a positive direction
+	boneOp b = getTargetBone();
+	float amount = 0.01;
+	switch (skeleton->currentAxis) {
+	case X:
+		rotateBone(magnitude, amount, 0, 0, b);
+		break;
+	case Y:
+		rotateBone(magnitude, 0, amount, 0, b);
+		break;
+	case Z:
+		rotateBone(magnitude, 0, 0, amount, b);
+		break;
+	default:
+		break;
+	}
+	skeleton->selected->parent->animationFrame[skeleton->amcFrame] = b;
+}
+
+void rotateOnDrag(int x, int y) {
 	//what we really want is the magnitude of the mouse movement
 	//previously was check for oldX vs newX
-	float magnitude = sqrt(x*x + y*y);
-
-	if(right_button_state == 1) {
+	float magnitude = sqrt(x * x + y * y);
+	if (right_button_state == 1) {
 		/*
 		 * Welcome to terrible C++ programming with reuben!
 		 */
 		if (skeleton->selected != NULL) {
 			if (skeleton->selected->parent != NULL) {
 				//if the mouse is generally moving in a positive direction
-				boneOp b = getTargetBone();
-				float amount = 0.01;
-				switch (skeleton->currentAxis) {
-					case X:
-						rotateBone(magnitude,amount,0,0,b);
-						break;
-					case Y:
-						rotateBone(magnitude,0,amount,0,b);
-						break;
-					case Z:
-						rotateBone(magnitude,0,0,amount,b);
-						break;
-					default:
-						break;
-				}
-
-				skeleton->selected->parent->animationFrame[skeleton->amcFrame] = b;
+				boneRotationCtrl(magnitude);
 			}
 		}
 	}
-
 	oldX = x;
 	oldY = y;
-
 	//set the reference magnitude for next call of this function
-	oldMagnitude = sqrt(oldX*oldX + oldY*oldY);
+	oldMagnitude = sqrt(oldX * oldX + oldY * oldY);
 }
+
+
+void getArc(int arcx, int arcy, int ix, int iy, float rad, glm::quat &result) {
+
+	float iyf = (float) (g_nWinHeight - (float) iy);
+	float x = (ix - arcx) / rad;
+	float y = (iyf - arcy) / rad;
+
+	// check click is inside the arcball radius
+	if (x*x + y*y < 1.0) {
+		float z = sqrt(1 - (x*x + y*y));
+		result = glm::quat(0, x, y, z);
+	}
+	else {
+		float len = sqrt(x*x + y*y);
+		result = glm::quat(0, x / len, y / len, 0);
+	}
+}
+
+//On mouse motion callback, used for rotating selected joints
+void onDrag(int x, int y) {
+
+	if (shift_right_button_state == 1) {
+		printf("x: %d, y: %d\n", x, y);
+		getArc(arcball_x, arcball_y, x, y, arcball_radius, click_new);
+		glm::quat q = cam_angle_d = click_new * glm::inverse(click_old);
+		cam_angle_d = q * cam_angle_d;
+		click_old = click_new;
+
+	} else if(shift_left_button_state == 1) {
+
+		float xn = click_x - x;
+		float yn = click_y - y;
+		float len_sq = xn*xn + yn*yn;
+		if (len_sq > 0.1) {
+			float len = sqrt(len_sq);
+			glm::vec3 add = glm::axis( glm::inverse(cam_angle) * glm::quat(0, xn, yn, 0) * cam_angle );
+			focus = focus + add * (len / arcball_radius);
+			click_x = x;
+			click_y = y;
+		}
+
+	} else {
+		rotateOnDrag(x, y);
+	}
+}
+
+void changeRotAxis() {
+	switch (skeleton->currentAxis) {
+	case Y:
+		skeleton->currentAxis = Z;
+		break;
+	case Z:
+		skeleton->currentAxis = X;
+		break;
+	case X:
+		skeleton->currentAxis = Y;
+		break;
+	default:
+		break;
+	}
+}
+
 //On keyboard event callback
 void G308_keyboardListener(unsigned char key, int x, int y) {
 
@@ -388,19 +515,7 @@ void G308_keyboardListener(unsigned char key, int x, int y) {
 			break;
 		//switch axis of rotation
 		case 'x':
-			switch(skeleton->currentAxis) {
-				case Y:
-					skeleton->currentAxis = Z;
-					break;
-				case Z:
-					skeleton->currentAxis = X;
-					break;
-				case X:
-					skeleton->currentAxis = Y;
-					break;
-				default:
-					break;
-			}
+			changeRotAxis();
 			break;
 	}
 
@@ -420,6 +535,10 @@ void G308_Reshape(int w, int h) {
 }
 // Set Camera Position
 void G308_SetCamera() {
+
+
+//	cam_angle_d = glm::slerp( glm::quat(), cam_angle_d, ( 1 - (float)tick.count() * 10 ) );
+	resize(g_nWinWidth, g_nWinHeight);
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 	gluPerspective(G308_FOVY, (double) g_nWinWidth / (double) g_nWinHeight,
@@ -428,16 +547,21 @@ void G308_SetCamera() {
 	glLoadIdentity();
 
 	glPushMatrix();
+	float x = focus.x, y = focus.y, z = focus.z;
 	glTranslatef(0.0,0.0,-zoom);
-	glRotatef(skeleton->cameraRotation.y + yRot,0,1,0);
-	cameraPosition = skeleton->cameraTranslation;
+
+	if(!firstClick) {
+		cam_angle = cam_angle_d * cam_angle;
+		glMultMatrixf( &glm::mat4_cast(cam_angle)[0][0] );
+	}
+
 	gluLookAt(
-			cameraPosition.x,
-			cameraPosition.y,
-			cameraPosition.z,
-			cameraPosition.x,
-			cameraPosition.y,
-			cameraPosition.z - zoom,
+			x,
+			y,
+			z,
+			0.0f,
+			0.0f,
+			z - zoom,
 			0.0, 1.0, 0.0
 			);
 }

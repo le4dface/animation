@@ -121,8 +121,8 @@ public:
 			"lfoot","ltoes"
 	};
 
-	G308_Point cameraRotation = {0,0,0};
-	G308_Point cameraTranslation = {0,0,0};
+	glm::vec3 cameraRotation = {0,0,0};
+	glm::vec3 cameraTranslation = {0,0,0};
 	colorId gColorId;
 	bone* root; //tree structure of bones
 	bone* selected; //selected bones via colour picking
@@ -135,6 +135,7 @@ public:
 	int frameCount;
 	TStrStrMap boneMap;
 	TStrStrMap::iterator it;
+
 
 	void display();
 	//glut menu controls, probably need refactoring

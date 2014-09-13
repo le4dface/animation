@@ -1,5 +1,4 @@
-0 pose
-1 pose1
-2 pose3
-3 pose4
-4 pose5
+0 muscle1
+1 muscle3
+2 muscle1
+3 muscle2

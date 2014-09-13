@@ -124,7 +124,7 @@ void Skeleton::display() {
 void Skeleton::play() {
 
 	// Move AMC animation one frame forward.
-	amcFrameFloat += 0.05;
+	amcFrameFloat += 0.01;
 
 }
 void Skeleton::pause() {
@@ -134,7 +134,11 @@ void Skeleton::stop() {
 }
 void Skeleton::rewind() {
 
-	amcFrameFloat -= 0.09;
+	if(amcFrameFloat <= 0) {
+		amcFrameFloat = 0;
+	} else {
+		amcFrameFloat -= 0.09;
+	}
 
 }
 void Skeleton::fastforward() {
@@ -529,4 +533,5 @@ void Skeleton::dotProductAngle(const G308_Point& v1, const G308_Point& v2,
 	//convert to degrees
 	temp = radians * (180 / M_PI);
 }
+
 
