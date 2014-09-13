@@ -103,9 +103,8 @@ void savePose();
 void readPose(int framenum, char* filename);
 
 //arc
-
 void getArc(int, int, int, int, float, glm::quat &);
-void getUnitCircle(int, int, int, int, glm::quat &);
+
 
 Skeleton* skeleton = NULL;
 Skeleton* skeletonDefault = NULL;
@@ -484,16 +483,10 @@ void G308_keyboardListener(unsigned char key, int x, int y) {
 		case 's':
 			savePose();
 			break;
-		case 'f':
-			if(skeleton->amcPlayerMode) {
-				skeleton->play();
-			}
-			break;
 		case 'a':
-			yRot += 1;
-			break;
-		case 'd':
-			yRot -= 1;
+			if(skeleton->amcPlayerMode) {
+				selected_mode = PLAY;
+			}
 			break;
 		//switch axis of rotation
 		case 'x':
@@ -501,8 +494,8 @@ void G308_keyboardListener(unsigned char key, int x, int y) {
 			break;
 	}
 
-	G308_SetLight();
-	glutPostRedisplay();
+//	G308_SetLight();
+//	glutPostRedisplay();
 
 }
 // Reshape function
@@ -518,8 +511,6 @@ void G308_Reshape(int w, int h) {
 // Set Camera Position
 void G308_SetCamera() {
 
-
-//	cam_angle_d = glm::slerp( glm::quat(), cam_angle_d, ( 1 - (float)tick.count() * 10 ) );
 	resize(g_nWinWidth, g_nWinHeight);
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
@@ -532,8 +523,11 @@ void G308_SetCamera() {
 	float x = focus.x, y = focus.y, z = focus.z;
 	glTranslatef(0.0,0.0,-zoom);
 
-	if(!firstClick) {
+	//if currently dragging rotating then adjust angle
+	if(!firstClick && (ROTATING)) {
 		cam_angle = cam_angle_d * cam_angle;
+		glMultMatrixf( &glm::mat4_cast(cam_angle)[0][0] );
+	} else if(!firstClick && (!ROTATING)) { //stop increasing angle
 		glMultMatrixf( &glm::mat4_cast(cam_angle)[0][0] );
 	}
 
